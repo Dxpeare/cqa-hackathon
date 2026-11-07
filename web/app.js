@@ -38,8 +38,7 @@
   function roleName(r) { return { operator: "Оператор", client: "Клиент", bot: "Бот", system: "Система" }[r] || r; }
   function setStatus() {
     api("/api/health").then(h => {
-      $("#status").textContent = "модель: " + (h.provider === "mock" ? "демо без ИИ" : h.provider === "ollama" ? "локальная" : h.provider === "hybrid" ? "гибрид + " + h.model : h.model)
-        + (h.has_api_key ? "" : " · нет ключа API");
+      $("#status").textContent = "режим: " + ({ mock: "демо без ИИ", ollama: "локальная модель", gemini: "Gemini", anthropic: "Claude", hybrid: "гибрид" }[h.provider] || h.provider);
     }).catch(() => { $("#status").textContent = "сервер недоступен"; });
     api("/api/appeals").then(list => {
       const n = list.filter(a => a.status === "open").length; const b = $("#appeals-badge");
@@ -391,41 +390,52 @@
 
   // ------------------------------------------------------------ settings
   async function renderSettings() {
-    const [s, h, lists] = await Promise.all([api("/api/settings"), api("/api/health"), api("/api/checklists")]);
+    const [s, h, lists, models] = await Promise.all([api("/api/settings"), api("/api/health"), api("/api/checklists"), api("/api/models")]);
     state.settings = s;
-    view.innerHTML = `<div class="panel" style="max-width:760px">
+    const opt = (list, cur) => (list.includes(cur) ? list : [cur, ...list]).map(m => `<option ${m === cur ? "selected" : ""}>${esc(m)}</option>`).join("");
+    const extLabel = { anthropic: "Claude", gemini: "Gemini" };
+    view.innerHTML = `<div class="panel" style="max-width:820px">
       <h2>Настройки оценки</h2>
       <div class="field" style="max-width:320px;margin-bottom:10px"><label>Название команды (попадает в results.json)</label><input type="text" id="s-team" value="${esc(s.team_name || "")}"></div>
       <div class="row">
-        <div class="field" style="width:220px"><label>Провайдер модели</label><select id="s-provider">
-          <option value="anthropic" ${s.provider === "anthropic" ? "selected" : ""}>Claude API</option>
+        <div class="field" style="width:250px"><label>Провайдер модели</label><select id="s-provider">
           <option value="ollama" ${s.provider === "ollama" ? "selected" : ""}>Локальная модель (Ollama)</option>
-          <option value="hybrid" ${s.provider === "hybrid" ? "selected" : ""}>Гибрид: локальная + Claude</option>
+          <option value="gemini" ${s.provider === "gemini" ? "selected" : ""}>Gemini API</option>
+          <option value="anthropic" ${s.provider === "anthropic" ? "selected" : ""}>Claude API</option>
+          <option value="hybrid" ${s.provider === "hybrid" ? "selected" : ""}>Гибрид: локальная + внешняя</option>
           <option value="mock" ${s.provider === "mock" ? "selected" : ""}>Демо без ИИ (эвристика)</option></select></div>
+      </div>
+      <h3>Локальная модель (Ollama) <span class="muted small">${models.ollama.length ? "— установлено: " + models.ollama.length : "— Ollama не запущена или моделей нет"}</span></h3>
+      <div class="row"><div class="field grow"><label>Адрес Ollama</label><input type="text" id="s-ollama-url" value="${esc(s.ollama_url)}"></div>
+        <div class="field" style="width:260px"><label>Модель</label><select id="s-ollama-model">${opt(models.ollama, s.ollama_model)}</select></div></div>
+      <h3>Gemini <span class="muted small">${h.has_gemini_key ? "— ключ найден" : "— ключа нет: GEMINI_API_KEY в .env (бесплатно на aistudio.google.com)"}</span></h3>
+      <div class="row"><div class="field" style="width:320px"><label>Модель Gemini</label><select id="s-gemini-model">${opt(models.gemini, s.gemini_model)}</select></div></div>
+      <h3>Claude <span class="muted small">${h.has_api_key ? "— ключ найден" : "— ключа нет: ANTHROPIC_API_KEY в .env"}</span></h3>
+      <div class="row">
         <div class="field" style="width:200px"><label>Модель Claude</label><select id="s-model">${["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"].map(m => `<option ${s.anthropic_model === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
         <div class="field" style="width:120px"><label>Усилие (effort)</label><select id="s-effort">${["low", "medium", "high"].map(m => `<option ${s.anthropic_effort === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
       </div>
-      <p class="small muted">Ключ API: ${h.has_api_key ? "✔ найден в .env" : "✖ не найден — впишите ANTHROPIC_API_KEY в файл .env и перезапустите сервер"}. Ссылка API организаторов: ${h.has_api_url ? "✔" : "✖ (CQA_API_URL в .env)"}</p>
-      <h3>Локальная модель</h3>
-      <div class="row"><div class="field grow"><label>Адрес Ollama</label><input type="text" id="s-ollama-url" value="${esc(s.ollama_url)}"></div><div class="field" style="width:220px"><label>Модель</label><input type="text" id="s-ollama-model" value="${esc(s.ollama_model)}"></div></div>
-      <h3>Гибрид: что всегда идёт в Claude</h3>
-      <div class="row"><div class="field"><label>Языки</label><input type="text" id="s-h-langs" value="${esc(s.hybrid_claude_languages.join(","))}" style="width:120px"></div>
-        <div class="field"><label>Каналы</label><input type="text" id="s-h-channels" value="${esc(s.hybrid_claude_channels.join(","))}" style="width:200px"></div>
-        <div class="field"><label>Мин. уверенность локальной модели</label><input type="number" id="s-h-conf" step="0.05" min="0" max="1" value="${s.hybrid_min_confidence}" style="width:120px"></div></div>
+      <h3>Гибрид</h3>
+      <div class="row"><div class="field"><label>Внешний провайдер</label><select id="s-h-ext" style="width:160px">${["gemini", "anthropic"].map(v => `<option value="${v}" ${s.hybrid_external === v ? "selected" : ""}>${extLabel[v]}</option>`).join("")}</select></div>
+        <div class="field"><label>Языки → внешняя</label><input type="text" id="s-h-langs" value="${esc(s.hybrid_claude_languages.join(","))}" style="width:120px"></div>
+        <div class="field"><label>Каналы → внешняя</label><input type="text" id="s-h-channels" value="${esc(s.hybrid_claude_channels.join(","))}" style="width:200px"></div>
+        <div class="field"><label>Мин. уверенность локальной</label><input type="number" id="s-h-conf" step="0.05" min="0" max="1" value="${s.hybrid_min_confidence}" style="width:120px"></div></div>
+      <p class="small muted">Остальные диалоги сначала оценивает локальная модель; если её уверенность ниже порога или ответ не прошёл проверку — диалог уходит во внешнюю.</p>
       <h3>Чек-лист по умолчанию</h3>
       <div class="row">${["agent chat", "voice call"].map(ch => `<div class="field" style="width:260px"><label>${ch === "agent chat" ? "Чат" : "Звонок"}</label><select data-def="${ch}">${lists.map(c => `<option value="${esc(c.id)}" ${s.default_checklists[ch] === c.id ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></div>`).join("")}</div>
       <div class="row" style="margin-top:16px"><button class="btn" id="s-save">Сохранить</button></div>
       <h3>Стоимость одной оценки (оценочно)</h3>
       <table class="list small"><tr><th>Модель</th><th>Вход / выход, $ за 1M токенов</th><th>≈ чат</th><th>≈ звонок</th></tr>
+        <tr><td>локальная (Ollama, Gemma 4 31B / Qwen 3.6 35B)</td><td>0</td><td>$0, 0.5–3 мин</td><td>$0, 1–6 мин</td></tr>
+        <tr><td>Gemini (бесплатный тариф)</td><td>0 (лимит запросов в день)</td><td>$0, секунды</td><td>$0, секунды</td></tr>
         <tr><td>claude-opus-5-5</td><td>4 / 20</td><td>$0.06–0.10</td><td>$0.12–0.20</td></tr>
-        <tr><td>claude-sonnet-5-5</td><td>2 / 10</td><td>$0.03–0.05</td><td>$0.06–0.10</td></tr>
-        <tr><td>claude-haiku-5-5</td><td>0.10 / 0.50</td><td>&lt;$0.01</td><td>&lt;$0.01</td></tr>
-        <tr><td>локальная (Ollama)</td><td>0</td><td>$0, 1–3 мин</td><td>$0, 3–6 мин</td></tr></table>
+        <tr><td>claude-sonnet-5-5</td><td>2 / 10</td><td>$0.03–0.05</td><td>$0.06–0.10</td></tr></table>
       <p class="small muted">Фактическая стоимость каждой оценки считается по реальному числу токенов и показана в карточке.</p>
     </div>`;
     $("#s-save").addEventListener("click", async () => {
       const patch = { team_name: $("#s-team").value.trim(), provider: $("#s-provider").value, anthropic_model: $("#s-model").value, anthropic_effort: $("#s-effort").value,
-        ollama_url: $("#s-ollama-url").value.trim(), ollama_model: $("#s-ollama-model").value.trim(),
+        gemini_model: $("#s-gemini-model").value, hybrid_external: $("#s-h-ext").value,
+        ollama_url: $("#s-ollama-url").value.trim(), ollama_model: $("#s-ollama-model").value,
         hybrid_claude_languages: $("#s-h-langs").value.split(",").map(x => x.trim().toUpperCase()).filter(Boolean),
         hybrid_claude_channels: $("#s-h-channels").value.split(",").map(x => x.trim()).filter(Boolean),
         hybrid_min_confidence: +$("#s-h-conf").value || 0.6,

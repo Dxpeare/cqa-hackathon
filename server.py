@@ -11,12 +11,13 @@ import os
 import sys
 import traceback
 import urllib.parse
+import urllib.request
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from cqa import batch, config, storage  # noqa: E402
-from cqa.evaluator import ProviderError, call_metrics, evaluate, relative_times, fmt_offset  # noqa: E402
+from cqa.evaluator import ProviderError, call_metrics, evaluate, gemini_models, relative_times, fmt_offset  # noqa: E402
 
 config.load_env()
 
@@ -45,12 +46,22 @@ def route(method, path, query, body):
     if path == "/api/health":
         return {"ok": True, "provider": s["provider"], "model": s["anthropic_model"],
                 "has_api_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
+                "has_gemini_key": bool(os.environ.get("GEMINI_API_KEY")),
                 "has_api_url": bool(os.environ.get("CQA_API_URL"))}
 
     if path == "/api/settings":
         if method == "PUT":
             return config.update_settings(body or {})
         return s
+
+    if path == "/api/models":
+        local = []
+        try:
+            with urllib.request.urlopen(s["ollama_url"].rstrip("/") + "/api/tags", timeout=5) as r:
+                local = sorted(m["name"] for m in json.loads(r.read().decode("utf-8")).get("models", []))
+        except OSError:
+            pass
+        return {"ollama": local, "gemini": gemini_models()}
 
     if path == "/api/datasets":
         return storage.list_datasets()

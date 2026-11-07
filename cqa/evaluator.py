@@ -14,6 +14,7 @@ import json
 import os
 import re
 import time
+import urllib.error
 import urllib.request
 
 from . import config, storage
@@ -242,6 +243,79 @@ def call_ollama(system, user, settings):
     return _extract_json(data["message"]["content"]), usage, "ollama:" + settings["ollama_model"]
 
 
+def _gemini_schema(schema):
+    """Gemini's responseSchema is a JSON-schema subset: drop additionalProperties."""
+    if isinstance(schema, dict):
+        return {k: _gemini_schema(v) for k, v in schema.items() if k != "additionalProperties"}
+    if isinstance(schema, list):
+        return [_gemini_schema(x) for x in schema]
+    return schema
+
+
+def call_gemini(system, user, settings):
+    """Google Gemini via REST (free tier works without a card). Retries on rate limits."""
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        raise ProviderError("нет GEMINI_API_KEY в файле .env")
+    model = settings.get("gemini_model", "gemini-2.5-pro")
+    url = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent" % model
+    body = {
+        "system_instruction": {"parts": [{"text": system}]},
+        "contents": [{"role": "user", "parts": [{"text": user}]}],
+        "generationConfig": {"temperature": 0, "responseMimeType": "application/json",
+                             "responseSchema": _gemini_schema(OUTPUT_SCHEMA)},
+    }
+    last_err = None
+    for attempt in range(4):
+        req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"),
+                                     headers={"Content-Type": "application/json", "x-goog-api-key": key})
+        try:
+            with urllib.request.urlopen(req, timeout=300) as r:
+                data = json.loads(r.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as e:
+            msg = e.read().decode("utf-8", "replace")[:300]
+            if e.code in (429, 503, 500) and attempt < 3:
+                last_err = "Gemini HTTP %d, повтор через %d с" % (e.code, 15 * (attempt + 1))
+                time.sleep(15 * (attempt + 1))
+                continue
+            if e.code == 400 and "API key" in msg:
+                raise ProviderError("Gemini: неверный GEMINI_API_KEY")
+            if e.code == 404:
+                raise ProviderError("Gemini: модель %s не найдена, выберите другую в настройках" % model)
+            raise ProviderError("Gemini HTTP %d: %s" % (e.code, msg))
+        except OSError as e:
+            raise ProviderError("Gemini: нет соединения (%s)" % e)
+    else:
+        raise ProviderError(last_err or "Gemini: не удалось получить ответ")
+    cands = data.get("candidates") or []
+    if not cands or not cands[0].get("content"):
+        reason = (cands[0].get("finishReason") if cands else data.get("promptFeedback", {}).get("blockReason")) or "пустой ответ"
+        raise ProviderError("Gemini не вернул ответ: %s" % reason)
+    text = "".join(p.get("text", "") for p in cands[0]["content"].get("parts", []))
+    um = data.get("usageMetadata", {})
+    usage = {"input_tokens": um.get("promptTokenCount", 0), "output_tokens": um.get("candidatesTokenCount", 0)}
+    return _extract_json(text), usage, "gemini:" + model
+
+
+def gemini_models():
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        return []
+    req = urllib.request.Request("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",
+                                 headers={"x-goog-api-key": key})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except OSError:
+        return []
+    out = []
+    for m in data.get("models", []):
+        if "generateContent" in m.get("supportedGenerationMethods", []):
+            out.append(m["name"].replace("models/", ""))
+    return sorted(out)
+
+
 def call_mock(conv, checklist):
     """Heuristic placeholder (NOT AI). Lets the UI be developed and demoed without a key."""
     msgs = conv["transcript"]
@@ -304,7 +378,9 @@ def _run_provider(name, conv, checklist, settings):
     if name == "mock":
         return call_mock(conv, checklist)
     system, user = SYSTEM_PROMPT, build_user_prompt(conv, checklist)
-    fn = call_anthropic if name == "anthropic" else call_ollama
+    fn = {"anthropic": call_anthropic, "gemini": call_gemini, "ollama": call_ollama}.get(name)
+    if fn is None:
+        raise ProviderError("неизвестный провайдер: %s" % name)
     raw, usage, model = fn(system, user, settings)
     rows, errors = validate_output(raw, conv, checklist)
     if errors:
@@ -319,14 +395,23 @@ def _run_provider(name, conv, checklist, settings):
     return raw, usage, model
 
 
+EXTERNAL_LABEL = {"anthropic": "Claude", "gemini": "Gemini"}
+
+
+def external_provider(settings):
+    return settings.get("hybrid_external") or "anthropic"
+
+
 def choose_provider(conv, settings, override=None):
     p = override or settings["provider"]
     if p != "hybrid":
         return p, "выбрано в настройках"
+    ext = external_provider(settings)
+    label = EXTERNAL_LABEL.get(ext, ext)
     if conv.get("language") in settings.get("hybrid_claude_languages", []):
-        return "anthropic", "гибрид: язык %s → Claude" % conv.get("language")
+        return ext, "гибрид: язык %s → %s" % (conv.get("language"), label)
     if conv.get("channel") in settings.get("hybrid_claude_channels", []):
-        return "anthropic", "гибрид: канал «%s» → Claude" % conv.get("channel")
+        return ext, "гибрид: канал «%s» → %s" % (conv.get("channel"), label)
     return "ollama", "гибрид: сначала локальная модель"
 
 
@@ -351,7 +436,8 @@ def evaluate(conversation_id, checklist_id=None, checklist_version=None, provide
     except ProviderError as e:
         if (provider or settings["provider"]) == "hybrid" and chosen == "ollama":
             attempts.append({"provider": chosen, "error": str(e)})
-            chosen, route_reason = "anthropic", "гибрид: локальная модель недоступна → Claude"
+            chosen = external_provider(settings)
+            route_reason = "гибрид: локальная модель недоступна → " + EXTERNAL_LABEL.get(chosen, chosen)
             raw, usage, model = _run_provider(chosen, conv, checklist, settings)
             attempts.append({"provider": chosen, "model": model, "usage": usage})
         else:
@@ -361,10 +447,11 @@ def evaluate(conversation_id, checklist_id=None, checklist_version=None, provide
     if (provider or settings["provider"]) == "hybrid" and chosen == "ollama":
         low = [r for r in rows if r["confidence"] is not None and r["confidence"] < settings["hybrid_min_confidence"]]
         if errors or low:
-            route_reason = "гибрид: локальная модель не уверена (%s) → Claude" % (
-                ", ".join(r["criterion_id"] for r in low) or "ошибки формата")
-            raw, usage2, model = _run_provider("anthropic", conv, checklist, settings)
-            attempts.append({"provider": "anthropic", "model": model, "usage": usage2})
+            ext = external_provider(settings)
+            route_reason = "гибрид: локальная модель не уверена (%s) → %s" % (
+                ", ".join(r["criterion_id"] for r in low) or "ошибки формата", EXTERNAL_LABEL.get(ext, ext))
+            raw, usage2, model = _run_provider(ext, conv, checklist, settings)
+            attempts.append({"provider": ext, "model": model, "usage": usage2})
             rows, errors = validate_output(raw, conv, checklist)
 
     answers = {r["criterion_id"]: r["answer"] for r in rows}

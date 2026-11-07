@@ -21,14 +21,17 @@ PRICES = {
 DEFAULT_SETTINGS = {
     # goes into results.json
     "team_name": "Название команды",
-    # anthropic | ollama | hybrid | mock
+    # anthropic | gemini | ollama | hybrid | mock
     "provider": "anthropic",
+    "gemini_model": "gemini-2.5-pro",
+    # which external provider the hybrid mode escalates to: anthropic | gemini
+    "hybrid_external": "anthropic",
     "anthropic_model": "claude-opus-5-5",
     "anthropic_effort": "medium",
     # server-side refusal fallback (Claude API); turned off automatically if rejected
     "anthropic_fallbacks": True,
     "ollama_url": "http://localhost:11434",
-    "ollama_model": "qwen3:32b",
+    "ollama_model": "gemma4:31b",
     # hybrid routing: these go straight to Claude, everything else to the local model first
     "hybrid_claude_languages": ["KZ"],
     "hybrid_claude_channels": ["voice call"],
