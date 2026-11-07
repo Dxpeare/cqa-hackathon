@@ -68,8 +68,22 @@
     const groups = [...new Set(convs.map(c => c.group_id))];
     const filt = state.filter || { group: "", lang: "", channel: "", q: "" };
     const running = jobs.find(j => j.status === "running");
+    const evd = convs.filter(c => c.evaluation);
+    const totals = evd.map(c => c.evaluation.total).filter(v => v != null);
+    const avg = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
     view.innerHTML = `
-      <div class="panel" style="margin-bottom:12px">
+      <section class="hero">
+        <div><h1><span class="grad">Оценка качества</span><br>диалогов</h1>
+          <p>Проверка работы операторов по чек-листу · чаты и звонки · RU / KZ / EN</p></div>
+        <div class="kpis">
+          <div class="kpi"><b>${convs.length}</b><span>диалогов</span></div>
+          <div class="kpi accent"><b>${evd.length}</b><span>оценено</span></div>
+          <div class="kpi"><b class="${scoreClass(avg)}">${fmtScore(avg)}</b><span>средний балл</span></div>
+          <div class="kpi ${evd.some(c => c.evaluation.critical_error) ? "alert" : ""}"><b>${evd.filter(c => c.evaluation.critical_error).length}</b><span>грубых ошибок</span></div>
+          <div class="kpi"><b>${evd.reduce((a, c) => a + c.evaluation.open_appeals, 0)}</b><span>открытых апелляций</span></div>
+        </div>
+      </section>
+      <div class="panel" style="margin-bottom:16px">
         <div class="row">
           <select id="f-group" style="width:140px"><option value="">Все наборы</option>${groups.map(g => `<option ${filt.group === g ? "selected" : ""}>${esc(g)}</option>`).join("")}</select>
           <select id="f-lang" style="width:110px"><option value="">Язык</option>${["RU", "KZ", "EN"].map(l => `<option ${filt.lang === l ? "selected" : ""}>${l}</option>`).join("")}</select>
@@ -94,10 +108,10 @@
       const rows = convs.filter(c => (!f.group || c.group_id === f.group) && (!f.lang || c.language === f.lang) && (!f.channel || c.channel === f.channel) && (!f.q || c.conversation_id.toLowerCase().includes(f.q)));
       $("#rows").innerHTML = rows.map(c => {
         const e = c.evaluation;
-        const st = !e ? '<span class="muted">не оценён</span>' : (e.open_appeals ? `<span class="tag" style="background:#fff6e8;color:#8a5a12">апелляция (${e.open_appeals})</span>` : e.has_changes ? '<span class="tag">пересмотрено</span>' : '<span class="tag" style="background:#dff5ea;color:#00855a">оценён</span>');
+        const st = !e ? '<span class="muted small">не оценён</span>' : (e.open_appeals ? `<span class="tag warn">апелляция (${e.open_appeals})</span>` : e.has_changes ? '<span class="tag">пересмотрено</span>' : '<span class="tag ok">оценён</span>');
         return `<tr class="clickable" data-id="${esc(c.conversation_id)}">
           <td><b>${esc(c.conversation_id)}</b></td><td>${esc(c.group_id)}</td>
-          <td>${c.channel === "voice call" ? '<span class="tag voice">звонок</span>' : '<span class="tag">чат</span>'}${c.has_audio ? "🎧" : ""}</td>
+          <td>${c.channel === "voice call" ? '<span class="tag voice">звонок</span>' : '<span class="tag">чат</span>'}${c.has_audio ? '<span class="tag voice">аудио</span>' : ""}</td>
           <td><span class="tag lang">${esc(c.language)}</span></td><td>${c.messages}</td>
           <td class="small">${e ? esc(e.checklist) : ""}</td>
           <td class="score ${e ? scoreClass(e.total) : ""}">${e ? fmtScore(e.total) : ""}${e && e.critical_error ? ' <span class="flag" title="грубая ошибка">⚠</span>' : ""}</td>
@@ -141,7 +155,7 @@
         const js = await api("/api/jobs"); const j = js[0]; const box = $("#job"); if (!box) return clearInterval(state.jobTimer);
         if (!j) return;
         const done = j.done + j.failed; box.hidden = false;
-        box.innerHTML = `<div class="row small"><span>${j.status === "running" ? '<span class="spinner" style="border-color:#00a76f;border-right-color:transparent"></span>' : "✔"} ${esc(j.group_id)}: ${done} / ${j.total} (ошибок ${j.failed}, пропущено ${j.skipped}) · $${(j.cost_usd || 0).toFixed(3)}</span></div>
+        box.innerHTML = `<div class="row small"><span>${j.status === "running" ? '<span class="spinner"></span>' : "✔"} ${esc(j.group_id)}: ${done} / ${j.total} (ошибок ${j.failed}, пропущено ${j.skipped}) · $${(j.cost_usd || 0).toFixed(3)}</span></div>
           <div class="progress"><div style="width:${j.total ? Math.round(done / j.total * 100) : 100}%"></div></div>
           ${j.errors.slice(0, 5).map(e => `<div class="small" style="color:#d64545">${esc(e.conversation_id)}: ${esc(e.error)}</div>`).join("")}`;
         if (j.status !== "running") { clearInterval(state.jobTimer); render(); }
@@ -195,10 +209,10 @@
     const left = $("#left");
     const audio = conv.audio_url ? `<audio id="audio" controls preload="none" src="${esc(conv.audio_url)}"></audio>` : "";
     const metrics = conv.metrics ? `<details class="raw"><summary>Метрики звонка: ${conv.metrics.operator_words} слов оператора, ${conv.metrics.operator_active_minutes || "?"} мин, ${conv.metrics.long_pauses.length} пауз ≥15 с</summary>
-      <div class="small">${conv.metrics.long_pauses.map(p => `пауза ${p.seconds} с перед [${p.before}] (${roleName(p.next_speaker)})`).join("<br>") || "долгих пауз нет"}</div></details>` : "";
+      <div class="small">${conv.metrics.long_pauses.map(p => `пауза ${p.seconds} с перед #${p.before + 1} (${roleName(p.next_speaker)})`).join("<br>") || "долгих пауз нет"}</div></details>` : "";
     left.innerHTML = `<h3 style="margin-top:0">Транскрипт <span class="muted small">(${conv.transcript.length} реплик)</span></h3>${audio}${metrics}
       <div class="transcript" id="transcript">${conv.transcript.map(m => `
-        <div class="msg ${esc(m.speaker)}" id="m-${m.index}"><div class="idx">[${m.index}]</div><div class="who">${roleName(m.speaker)}</div>
+        <div class="msg ${esc(m.speaker)}" id="m-${m.index}"><div class="idx">#${m.index + 1}</div><div class="who">${roleName(m.speaker)}</div>
         <div>${esc(m.text)}<span class="ts">${esc(m.offset)}${conv.audio_url && m.offset_sec != null ? ` <button class="play" data-sec="${m.offset_sec}" title="слушать с этого места">▶</button>` : ""}</span></div></div>`).join("")}</div>`;
     left.onclick = e => {
       const p = e.target.closest(".play"); if (!p) return;
@@ -245,8 +259,8 @@
             <div><b>${esc(c.title)}</b> <span class="muted small">· вес ${c.weight}${c.critical ? " · без баллов" : ""}${c.type === "scale" ? " · шкала 0–" + Math.max(...c.scale.map(s => +s.value)) : ""}${r.confidence != null ? " · уверенность " + Math.round(r.confidence * 100) + "%" : ""}</span></div>
             <span class="pts">${c.critical ? (ans === "yes" ? '<span class="flag">нарушение</span>' : "—") : frow.points == null ? '<span class="muted">N/A</span>' : `<b>${fmtScore(frow.points)}</b> / ${fmtScore(frow.max_points)}`}</span></div>
           <div class="expl">${esc(r.explanation || "—")}</div>
-          <div class="evid">${(r.evidence_ids || []).map(i => `<button data-ev="${i}" title="${esc((conv.transcript[i] || {}).text || "")}">реплика [${i}] ${esc((conv.transcript[i] || {}).offset || "")}</button>`).join("")}
-            ${r.checked_range ? `<button data-range="${r.checked_range[0]}-${r.checked_range[1]}">проверен участок [${r.checked_range[0]}–${r.checked_range[1]}]</button>` : ""}</div>
+          <div class="evid">${(r.evidence_ids || []).map(i => `<button data-ev="${i}" title="${esc((conv.transcript[i] || {}).text || "")}">реплика #${i + 1} ${esc((conv.transcript[i] || {}).offset || "")}</button>`).join("")}
+            ${r.checked_range ? `<button data-range="${r.checked_range[0]}-${r.checked_range[1]}">проверен участок #${r.checked_range[0] + 1}–${r.checked_range[1] + 1}</button>` : ""}</div>
           ${finalAns != null && finalAns !== r.answer ? `<div class="changed">Исходная оценка модели: <b>${answerLabel(c, r.answer)}</b> → после пересмотра: <b>${answerLabel(c, finalAns)}</b></div>` : ""}
           ${appeals.map(a => `<div class="appeal ${a.status}"><b>Апелляция</b> (${esc(a.author)}, ${esc(a.created_at.slice(0, 16).replace("T", " "))}): ${esc(a.comment)}
             ${a.decision ? `<div style="margin-top:4px"><b>Решение (${esc(a.decision.reviewer)}):</b> ${a.decision.action === "confirm" ? "оценка подтверждена" : "оценка изменена на <b>" + answerLabel(c, a.decision.new_answer) + "</b>"} — ${esc(a.decision.reason)}</div>` : '<div class="muted small">ожидает решения проверяющего</div>'}</div>`).join("")}
@@ -302,7 +316,7 @@
     const list = await api("/api/appeals");
     view.innerHTML = `<div class="panel" style="padding:0"><table class="list"><thead><tr><th>Статус</th><th>Диалог</th><th>Чек-лист</th><th>Критерий</th><th>Оспорена</th><th>Комментарий</th><th>Решение</th><th>Подана</th></tr></thead><tbody>
       ${list.map(a => `<tr class="clickable" data-go="/card/${encodeURIComponent(a.conversation_id)}/${a.evaluation_id}">
-        <td>${a.status === "open" ? '<span class="tag" style="background:#fff6e8;color:#8a5a12">открыта</span>' : '<span class="tag">решена</span>'}</td>
+        <td>${a.status === "open" ? '<span class="tag warn">открыта</span>' : '<span class="tag">решена</span>'}</td>
         <td><b>${esc(a.conversation_id)}</b></td><td class="small">${esc(a.checklist)}</td><td>${esc(a.criterion_id)}</td><td>${esc(answerLabel({}, a.disputed_answer))}</td>
         <td class="small">${esc(a.comment)}</td><td class="small">${a.decision ? (a.decision.action === "confirm" ? "подтверждена" : "изменена → " + esc(answerLabel({}, a.decision.new_answer))) + ": " + esc(a.decision.reason) : "—"}</td>
         <td class="small">${esc(a.created_at.slice(0, 16).replace("T", " "))}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">Апелляций нет</td></tr>'}
