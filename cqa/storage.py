@@ -233,6 +233,24 @@ def latest_evaluations(checklist_id=None):
     return best
 
 
+def save_error(conversation_id, message):
+    """Remember that an evaluation failed, so results.json can report status=error honestly."""
+    with _lock:
+        _write(os.path.join(config.STORAGE_DIR, "errors", conversation_id + ".json"),
+               {"conversation_id": conversation_id, "error": message, "at": now_iso()})
+
+
+def get_errors():
+    out = {}
+    for p in glob.glob(os.path.join(config.STORAGE_DIR, "errors", "*.json")):
+        try:
+            e = _read(p)
+            out[e["conversation_id"]] = e
+        except (ValueError, OSError, KeyError):
+            continue
+    return out
+
+
 def new_id(prefix):
     return prefix + "_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S") + "_" + uuid.uuid4().hex[:6]
 

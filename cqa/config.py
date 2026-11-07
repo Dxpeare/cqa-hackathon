@@ -19,6 +19,8 @@ PRICES = {
 }
 
 DEFAULT_SETTINGS = {
+    # goes into results.json
+    "team_name": "Название команды",
     # anthropic | ollama | hybrid | mock
     "provider": "anthropic",
     "anthropic_model": "claude-opus-5-5",
