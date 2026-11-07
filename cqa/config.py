@@ -32,6 +32,11 @@ DEFAULT_SETTINGS = {
     "anthropic_fallbacks": True,
     "ollama_url": "http://localhost:11434",
     "ollama_model": "gemma4:31b",
+    # json (+thinking, example in prompt) is the robust mode; schema + think=false is fast for Qwen
+    "ollama_format": "json",
+    "ollama_think": True,
+    "ollama_num_ctx": 16384,
+    "ollama_timeout": 600,
     # hybrid routing: these go straight to Claude, everything else to the local model first
     "hybrid_claude_languages": ["KZ"],
     "hybrid_claude_channels": ["voice call"],
