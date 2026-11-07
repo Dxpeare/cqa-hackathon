@@ -227,18 +227,39 @@ def call_anthropic(system, user, settings):
     return _extract_json(text), usage, model
 
 
+JSON_EXAMPLE = {"criteria": [{"criterion_id": "c01", "answer": "yes", "evidence_ids": [9], "checked_from": -1,
+                              "checked_to": -1, "explanation": "...", "confidence": 0.9}], "summary": "..."}
+
+
 def call_ollama(system, user, settings):
+    """Local model via Ollama.
+
+    Tested on Gemma 4 31B / Qwen 3.6 35B (Nov 2026): a strict JSON schema (xgrammar) combined with
+    thinking hangs Gemma, and schema without thinking makes it loop. Default is therefore
+    format="json" + thinking + an explicit example of the structure, which both models follow.
+    ollama_think=false + ollama_format="schema" is a fast mode that works well for Qwen (~10 s).
+    """
     url = settings["ollama_url"].rstrip("/") + "/api/chat"
-    body = {"model": settings["ollama_model"], "stream": False, "format": OUTPUT_SCHEMA,
-            "options": {"temperature": 0, "num_ctx": 32768},
+    fmt = settings.get("ollama_format", "json")
+    think = bool(settings.get("ollama_think", True))
+    if fmt == "schema":
+        out_format = OUTPUT_SCHEMA
+    else:
+        out_format = "json"
+        user = user + "\n\nФормат ответа — строго такой JSON (без markdown, по одному объекту на каждый критерий):\n" + \
+            json.dumps(JSON_EXAMPLE, ensure_ascii=False)
+    body = {"model": settings["ollama_model"], "stream": False, "format": out_format, "think": think,
+            "options": {"temperature": 0, "num_ctx": int(settings.get("ollama_num_ctx", 16384)), "num_predict": 8000},
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
     req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"),
                                  headers={"Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=900) as r:
+        with urllib.request.urlopen(req, timeout=int(settings.get("ollama_timeout", 600))) as r:
             data = json.loads(r.read().decode("utf-8"))
     except OSError as e:
         raise ProviderError("Ollama недоступна (%s). Запущена ли программа Ollama?" % e)
+    if data.get("done_reason") == "length":
+        raise ProviderError("локальная модель не уложилась в лимит токенов")
     usage = {"input_tokens": data.get("prompt_eval_count", 0), "output_tokens": data.get("eval_count", 0)}
     return _extract_json(data["message"]["content"]), usage, "ollama:" + settings["ollama_model"]
 
