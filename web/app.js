@@ -37,9 +37,6 @@
   }
   function roleName(r) { return { operator: "Оператор", client: "Клиент", bot: "Бот", system: "Система" }[r] || r; }
   function setStatus() {
-    api("/api/health").then(h => {
-      $("#status").textContent = "режим: " + ({ mock: "демо без ИИ", ollama: "локальная модель", gemini: "Gemini", anthropic: "Claude", hybrid: "гибрид" }[h.provider] || h.provider);
-    }).catch(() => { $("#status").textContent = "сервер недоступен"; });
     api("/api/appeals").then(list => {
       const n = list.filter(a => a.status === "open").length; const b = $("#appeals-badge");
       b.hidden = !n; b.textContent = n;
@@ -73,8 +70,7 @@
     const avg = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
     view.innerHTML = `
       <section class="hero">
-        <div><h1><span class="grad">Оценка качества</span><br>диалогов</h1>
-          <p>Проверка работы операторов по чек-листу · чаты и звонки · RU / KZ / EN</p></div>
+        <h1><span class="grad">Оценка качества</span> диалогов</h1>
         <div class="kpis">
           <div class="kpi"><b>${convs.length}</b><span>диалогов</span></div>
           <div class="kpi accent"><b>${evd.length}</b><span>оценено</span></div>
@@ -89,7 +85,7 @@
           <select id="f-lang" style="width:110px"><option value="">Язык</option>${["RU", "KZ", "EN"].map(l => `<option ${filt.lang === l ? "selected" : ""}>${l}</option>`).join("")}</select>
           <select id="f-channel" style="width:140px"><option value="">Канал</option><option value="agent chat" ${filt.channel === "agent chat" ? "selected" : ""}>Чат</option><option value="voice call" ${filt.channel === "voice call" ? "selected" : ""}>Звонок</option></select>
           <input id="f-q" type="text" placeholder="Поиск по ID" value="${esc(filt.q)}" style="width:160px">
-          <span class="grow"></span>
+          <span class="break"></span>
           <button class="btn secondary sm" id="btn-upload">Загрузить JSON</button>
           <input id="file-upload" type="file" accept=".json,application/json" hidden>
           <button class="btn secondary sm" id="btn-fetch">Скачать из API…</button>
