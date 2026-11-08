@@ -4,19 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CQA — оценка качества диалогов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="cqa-app" class="cqa">
   <header class="cqa-top">
-    <div class="cqa-brand">CQA <span>Conversation Quality Analytics</span></div>
     <nav class="cqa-nav">
       <button data-view="list" class="active">Диалоги</button>
       <button data-view="checklists">Чек-листы</button>
       <button data-view="appeals">Апелляции <span id="appeals-badge" class="badge" hidden></span></button>
+      <button data-view="analytics">Аналитика</button>
+      <button data-view="audit">Журнал</button>
       <button data-view="settings">Настройки</button>
     </nav>
-    <div id="status" class="cqa-status"></div>
+    <span class="grow"></span>
+    <span id="model-pill" class="model-pill" title="Кто сейчас оценивает диалоги. Меняется в «Настройках»"></span>
+    <div class="role-switch" title="От чьего имени выполняются действия">
+      <button data-role="operator">Оператор</button>
+      <button data-role="reviewer">Проверяющий</button>
+    </div>
   </header>
 
   <main id="view" class="cqa-view"></main>

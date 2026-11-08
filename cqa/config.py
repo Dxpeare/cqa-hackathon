@@ -22,7 +22,7 @@ DEFAULT_SETTINGS = {
     # goes into results.json
     "team_name": "Название команды",
     # anthropic | gemini | ollama | hybrid | mock
-    "provider": "anthropic",
+    "provider": "ollama",
     "gemini_model": "gemini-2.5-pro",
     # which external provider the hybrid mode escalates to: anthropic | gemini
     "hybrid_external": "anthropic",

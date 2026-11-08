@@ -38,9 +38,58 @@ def conversation_view(conv):
     return out
 
 
+def analytics(group):
+    """Aggregates over the latest evaluation of every conversation (final score after appeals)."""
+    convs = storage.all_conversations()
+    evs = [e for e in storage.latest_evaluations().values()
+           if e["conversation_id"] in convs and (not group or convs[e["conversation_id"]]["group_id"] == group)]
+
+    def avg(xs):
+        xs = [x for x in xs if x is not None]
+        return round(sum(xs) / len(xs), 2) if xs else None
+
+    def by(key):
+        out = {}
+        for e in evs:
+            out.setdefault(key(e) or "—", []).append((e.get("final_score") or e["score"])["total"])
+        return [{"key": k, "count": len(v), "avg": avg(v)} for k, v in sorted(out.items())]
+
+    crit = {}
+    for e in evs:
+        for r in (e.get("final_score") or e["score"])["criteria"]:
+            c = crit.setdefault(r["title"], {"title": r["title"], "critical": r["critical"], "scored": 0, "na": 0,
+                                            "fails": 0, "fractions": []})
+            if r["status"] == "na":
+                c["na"] += 1
+            elif r["status"] == "scored":
+                c["scored"] += 1
+                if r["critical"]:
+                    c["fails"] += r["answer"] == "yes"
+                elif r.get("max_points"):
+                    frac = r["points"] / r["max_points"]
+                    c["fractions"].append(frac * 100)
+                    c["fails"] += frac == 0
+    for c in crit.values():
+        c["avg_percent"] = avg(c.pop("fractions"))
+    totals = [(e.get("final_score") or e["score"])["total"] for e in evs]
+    bins = [("0–49", 0, 50), ("50–69", 50, 70), ("70–84", 70, 85), ("85–100", 85, 101)]
+    appeals = [a for e in evs for a in e.get("appeals", [])]
+    return {
+        "count": len(evs), "avg": avg(totals),
+        "critical": sum(1 for e in evs if (e.get("final_score") or e["score"])["critical_error"]),
+        "appeals_open": sum(a["status"] == "open" for a in appeals),
+        "appeals_changed": sum(bool(a.get("decision")) and a["decision"]["action"] == "change" for a in appeals),
+        "distribution": [{"key": k, "count": sum(1 for t in totals if t is not None and lo <= t < hi)} for k, lo, hi in bins],
+        "criteria": list(crit.values()),
+        "by_language": by(lambda e: convs[e["conversation_id"]].get("language")),
+        "by_channel": by(lambda e: convs[e["conversation_id"]].get("channel")),
+        "by_day": by(lambda e: e["created_at"][:10]),
+    }
+
+
 # ------------------------------------------------------------------ routes
 
-def route(method, path, query, body):
+def route(method, path, query, body, actor="Пользователь"):
     s = config.get_settings()
 
     if path == "/api/health":
@@ -51,7 +100,9 @@ def route(method, path, query, body):
 
     if path == "/api/settings":
         if method == "PUT":
-            return config.update_settings(body or {})
+            new = config.update_settings(body or {})
+            storage.audit("Изменены настройки", "провайдер: %s" % new["provider"], actor)
+            return new
         return s
 
     if path == "/api/models":
@@ -67,7 +118,9 @@ def route(method, path, query, body):
         return storage.list_datasets()
 
     if path == "/api/datasets/fetch" and method == "POST":
-        return batch.fetch_dataset((body or {}).get("group_id") or "DEV")
+        r = batch.fetch_dataset((body or {}).get("group_id") or "DEV")
+        storage.audit("Скачан набор из API", "%s: %s диалогов" % (r.get("group_id"), r.get("count")), actor)
+        return r
 
     if path == "/api/datasets/upload" and method == "POST":
         recs = body if isinstance(body, list) else storage._records_of(body or {})
@@ -79,6 +132,7 @@ def route(method, path, query, body):
             r.setdefault("language", "RU")
             r.setdefault("audio_url", None)
         storage.add_uploaded(recs)
+        storage.audit("Загружены диалоги из файла", "%d диалогов" % len(recs), actor)
         return {"count": len(recs)}
 
     if path == "/api/conversations":
@@ -95,7 +149,9 @@ def route(method, path, query, body):
                                       "critical_error": fs["critical_error"], "checklist": ev["checklist"]["name"],
                                       "model": ev.get("model"), "created_at": ev["created_at"],
                                       "open_appeals": sum(1 for a in ev.get("appeals", []) if a["status"] == "open"),
-                                      "has_changes": ev.get("has_changes", False)}
+                                      "has_changes": ev.get("has_changes", False),
+                                      "min_confidence": min((r["confidence"] for r in ev["results"]
+                                                             if r.get("confidence") is not None), default=None)}
             out.append(item)
         return out
 
@@ -113,9 +169,11 @@ def route(method, path, query, body):
     if path == "/api/checklists":
         if method == "POST":
             try:
-                return storage.save_checklist(body or {})
+                c = storage.save_checklist(body or {})
             except ValueError as e:
                 raise ApiError(str(e))
+            storage.audit("Сохранён чек-лист", "%s v%d" % (c["name"], c["version"]), actor)
+            return c
         return storage.list_checklists(all_versions=query.get("all") == "1")
 
     if path.startswith("/api/checklists/"):
@@ -128,15 +186,21 @@ def route(method, path, query, body):
     if path == "/api/evaluate" and method == "POST":
         b = body or {}
         try:
-            return evaluate(b.get("conversation_id"), checklist_id=b.get("checklist_id"),
-                            checklist_version=b.get("checklist_version"), provider=b.get("provider"))
+            ev = evaluate(b.get("conversation_id"), checklist_id=b.get("checklist_id"),
+                          checklist_version=b.get("checklist_version"), provider=b.get("provider"))
         except (ProviderError, KeyError, ValueError) as e:
             raise ApiError(str(e).strip("'"))
+        storage.audit("Оценён диалог", "%s: %s баллов, %s, модель %s" % (
+            ev["conversation_id"], ev["score"]["total"], ev["checklist"]["name"], ev.get("model")), actor)
+        return ev
 
     if path == "/api/evaluate/batch" and method == "POST":
         b = body or {}
-        return batch.start_batch(b.get("group_id") or "DEV", checklist_id=b.get("checklist_id"),
-                                 force=bool(b.get("force")), provider=b.get("provider"))
+        job = batch.start_batch(b.get("group_id") or "DEV", checklist_id=b.get("checklist_id"),
+                                force=bool(b.get("force")), provider=b.get("provider"))
+        storage.audit("Переоценка всего набора" if b.get("force") else "Оценка неоценённых диалогов",
+                      "%s: %s диалогов в очереди" % (job.get("group_id"), job.get("total", "?")), actor)
+        return job
 
     if path == "/api/jobs":
         return batch.list_jobs()
@@ -144,7 +208,17 @@ def route(method, path, query, body):
     if path == "/api/export" and method == "POST":
         b = body or {}
         _, meta = batch.export_results(b.get("group_id") or "DEV", folder=b.get("folder"))
+        storage.audit("Выгружен results.json", "%s: ok %s, error %s" % (meta.get("path"), meta.get("ok_records"), meta.get("error_records")), actor)
         return meta
+
+    if path == "/api/evaluations/delete" and method == "POST":
+        group = ((body or {}).get("group_id") or "").upper()
+        convs = storage.all_conversations()
+        ids = [e["id"] for e in storage.list_evaluations()
+               if e["conversation_id"] in convs and convs[e["conversation_id"]]["group_id"] == group]
+        removed = storage.delete_evaluations(ids)
+        storage.audit("Удалены оценки набора", "%s: %d оценок" % (group, len(removed)), actor)
+        return {"removed": len(removed)}
 
     if path.startswith("/api/evaluations/"):
         parts = path.split("/")
@@ -154,14 +228,28 @@ def route(method, path, query, body):
             if not ev:
                 raise ApiError("оценка не найдена", 404)
             return ev
+        if len(parts) == 4 and method == "DELETE":
+            removed = storage.delete_evaluations([ev_id])
+            if not removed:
+                raise ApiError("оценка не найдена", 404)
+            storage.audit("Удалена оценка", "%s (%s)" % (removed[0]["conversation_id"], ev_id), actor)
+            return {"removed": 1}
         try:
             if len(parts) == 5 and parts[4] == "appeals" and method == "POST":
                 b = body or {}
-                return storage.create_appeal(ev_id, b.get("criterion_id"), b.get("comment"), b.get("author") or "Оператор")
+                ev = storage.create_appeal(ev_id, b.get("criterion_id"), b.get("comment"), actor)
+                storage.audit("Подана апелляция", "%s, критерий %s: %s" % (ev["conversation_id"], b.get("criterion_id"), b.get("comment")), actor)
+                return ev
             if len(parts) == 7 and parts[4] == "appeals" and parts[6] == "decision" and method == "POST":
                 b = body or {}
-                return storage.decide_appeal(ev_id, parts[5], b.get("action"), b.get("reason"),
-                                             new_answer=b.get("new_answer"), reviewer=b.get("reviewer") or "Проверяющий")
+                ev = storage.decide_appeal(ev_id, parts[5], b.get("action"), b.get("reason"),
+                                           new_answer=b.get("new_answer"), reviewer=actor)
+                a = next(x for x in ev["appeals"] if x["id"] == parts[5])
+                storage.audit("Решение по апелляции", "%s, критерий %s: %s%s, причина: %s, итог %s" % (
+                    ev["conversation_id"], a["criterion_id"], "подтверждено" if b.get("action") == "confirm" else "изменено на ",
+                    "" if b.get("action") == "confirm" else a["decision"]["new_answer"], b.get("reason"),
+                    ev["final_score"]["total"]), actor)
+                return ev
         except KeyError as e:
             raise ApiError(str(e).strip("'"), 404)
         except ValueError as e:
@@ -169,6 +257,12 @@ def route(method, path, query, body):
 
     if path == "/api/appeals":
         return storage.open_appeals()
+
+    if path == "/api/audit":
+        return storage.list_audit()
+
+    if path == "/api/analytics":
+        return analytics((query.get("group") or "").upper())
 
     raise ApiError("нет такого маршрута: %s %s" % (method, path), 404)
 
@@ -204,7 +298,8 @@ class Handler(SimpleHTTPRequestHandler):
             except ValueError:
                 return self._send_json({"error": "тело запроса не JSON"}, 400)
         try:
-            self._send_json(route(self.command, parsed.path, query, body))
+            actor = {"operator": "Оператор", "reviewer": "Проверяющий"}.get(self.headers.get("X-CQA-Role"), "Пользователь")
+            self._send_json(route(self.command, parsed.path, query, body, actor))
         except ApiError as e:
             self._send_json({"error": str(e)}, e.status)
         except Exception as e:  # report instead of silently dropping the connection
@@ -222,6 +317,9 @@ class Handler(SimpleHTTPRequestHandler):
         return self._handle_api()
 
     def do_PUT(self):
+        return self._handle_api()
+
+    def do_DELETE(self):
         return self._handle_api()
 
     def end_headers(self):
