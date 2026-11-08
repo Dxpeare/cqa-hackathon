@@ -8,7 +8,7 @@
 
   // ------------------------------------------------------------ helpers
   async function api(path, method, body) {
-    const r = await fetch(path, { method: method || "GET", headers: { "Content-Type": "application/json" },
+    const r = await fetch(path, { method: method || "GET", headers: { "Content-Type": "application/json", "X-CQA-Role": state.role },
       body: body === undefined ? undefined : JSON.stringify(body) });
     let data = null;
     try { data = await r.json(); } catch (e) { data = { error: "сервер вернул не JSON" }; }
@@ -36,7 +36,25 @@
     return a;
   }
   function roleName(r) { return { operator: "Оператор", client: "Клиент", bot: "Бот", system: "Система" }[r] || r; }
+  function modelLabel(s) {
+    const ext = s.hybrid_external === "gemini" ? s.gemini_model : s.anthropic_model;
+    return { mock: "Демо без ИИ: оценки ненастоящие", ollama: "Локальная · " + s.ollama_model, gemini: "Gemini · " + s.gemini_model,
+      anthropic: "Claude · " + s.anthropic_model, hybrid: "Гибрид · " + s.ollama_model + " + " + ext }[s.provider] || s.provider;
+  }
+  function setRole(role) {
+    state.role = role;
+    document.querySelectorAll(".role-switch button").forEach(b => b.classList.toggle("active", b.dataset.role === role));
+  }
+  document.querySelectorAll(".role-switch button").forEach(b => b.addEventListener("click", () => {
+    setRole(b.dataset.role);
+    if (state.ev && $("#right")) renderResult(state.conv, state.ev);
+  }));
+  setRole(state.role);
   function setStatus() {
+    api("/api/settings").then(s => {
+      state.settings = s; const p = $("#model-pill");
+      p.textContent = modelLabel(s); p.classList.toggle("warn", s.provider === "mock");
+    }).catch(() => { $("#model-pill").textContent = "сервер недоступен"; });
     api("/api/appeals").then(list => {
       const n = list.filter(a => a.status === "open").length; const b = $("#appeals-badge");
       b.hidden = !n; b.textContent = n;
@@ -44,7 +62,8 @@
   }
 
   // ------------------------------------------------------------ routing
-  const routes = { list: renderList, card: renderCard, checklists: renderChecklists, appeals: renderAppeals, settings: renderSettings };
+  const routes = { list: renderList, card: renderCard, checklists: renderChecklists, appeals: renderAppeals, settings: renderSettings,
+    analytics: renderAnalytics, audit: renderAudit };
   function go(hash) { location.hash = hash; }
   async function render() {
     const parts = location.hash.replace(/^#\/?/, "").split("/");
@@ -63,7 +82,9 @@
     const [convs, datasets, checklists, jobs] = await Promise.all([api("/api/conversations"), api("/api/datasets"), api("/api/checklists"), api("/api/jobs")]);
     state.checklists = checklists;
     const groups = [...new Set(convs.map(c => c.group_id))];
-    const filt = state.filter || { group: "", lang: "", channel: "", q: "" };
+    const filt = state.filter || { group: "", lang: "", channel: "", attn: "", q: "" };
+    const ATTN = { attention: "Требуют внимания", critical: "Грубые ошибки", low: "Балл ниже 70", unsure: "Модель не уверена",
+      appeals: "Открытые апелляции", none: "Не оценены" };
     const running = jobs.find(j => j.status === "running");
     const evd = convs.filter(c => c.evaluation);
     const totals = evd.map(c => c.evaluation.total).filter(v => v != null);
@@ -84,6 +105,7 @@
           <select id="f-group" style="width:140px"><option value="">Все наборы</option>${groups.map(g => `<option ${filt.group === g ? "selected" : ""}>${esc(g)}</option>`).join("")}</select>
           <select id="f-lang" style="width:110px"><option value="">Язык</option>${["RU", "KZ", "EN"].map(l => `<option ${filt.lang === l ? "selected" : ""}>${l}</option>`).join("")}</select>
           <select id="f-channel" style="width:140px"><option value="">Канал</option><option value="agent chat" ${filt.channel === "agent chat" ? "selected" : ""}>Чат</option><option value="voice call" ${filt.channel === "voice call" ? "selected" : ""}>Звонок</option></select>
+          <select id="f-attn" style="width:200px"><option value="">Все оценки</option>${Object.entries(ATTN).map(([k, v]) => `<option value="${k}" ${filt.attn === k ? "selected" : ""}>${v}</option>`).join("")}</select>
           <input id="f-q" type="text" placeholder="Поиск по ID" value="${esc(filt.q)}" style="width:160px">
           <span class="break"></span>
           <button class="btn secondary sm" id="btn-upload">Загрузить JSON</button>
@@ -92,6 +114,9 @@
           <select id="batch-checklist" style="width:200px"><option value="">Чек-лист по каналу</option>${checklists.map(c => `<option value="${esc(c.id)}">${esc(c.name)} (v${c.version})</option>`).join("")}</select>
           <button class="btn sm" id="btn-batch" ${running ? "disabled" : ""}>Оценить все неоценённые</button>
           <button class="btn secondary sm" id="btn-export">Выгрузить results.json</button>
+          <span class="grow"></span>
+          <button class="btn secondary sm" id="btn-reeval" ${running ? "disabled" : ""}>Переоценить все</button>
+          <button class="btn danger sm" id="btn-clear">Удалить оценки набора</button>
         </div>
         <div id="job" style="margin-top:10px" ${running ? "" : "hidden"}></div>
       </div>
@@ -99,9 +124,14 @@
         <th>ID</th><th>Набор</th><th>Канал</th><th>Язык</th><th>Реплик</th><th>Чек-лист</th><th>Итог</th><th>Статус</th><th></th>
       </tr></thead><tbody id="rows"></tbody></table></div>`;
     function apply() {
-      state.filter = { group: $("#f-group").value, lang: $("#f-lang").value, channel: $("#f-channel").value, q: $("#f-q").value.trim().toLowerCase() };
+      state.filter = { group: $("#f-group").value, lang: $("#f-lang").value, channel: $("#f-channel").value, attn: $("#f-attn").value, q: $("#f-q").value.trim().toLowerCase() };
       const f = state.filter;
-      const rows = convs.filter(c => (!f.group || c.group_id === f.group) && (!f.lang || c.language === f.lang) && (!f.channel || c.channel === f.channel) && (!f.q || c.conversation_id.toLowerCase().includes(f.q)));
+      const attn = c => {
+        const e = c.evaluation; if (f.attn === "none") return !e; if (!e) return false;
+        const t = { critical: e.critical_error, low: e.total != null && e.total < 70, unsure: e.min_confidence != null && e.min_confidence < 0.6, appeals: e.open_appeals > 0 };
+        return f.attn === "attention" ? Object.values(t).some(Boolean) : t[f.attn];
+      };
+      const rows = convs.filter(c => (!f.group || c.group_id === f.group) && (!f.lang || c.language === f.lang) && (!f.channel || c.channel === f.channel) && (!f.attn || attn(c)) && (!f.q || c.conversation_id.toLowerCase().includes(f.q)));
       $("#rows").innerHTML = rows.map(c => {
         const e = c.evaluation;
         const st = !e ? '<span class="muted small">не оценён</span>' : (e.open_appeals ? `<span class="tag warn">апелляция (${e.open_appeals})</span>` : e.has_changes ? '<span class="tag">пересмотрено</span>' : '<span class="tag ok">оценён</span>');
@@ -115,7 +145,7 @@
       }).join("") || '<tr><td colspan="9" class="empty">Нет диалогов. Загрузите JSON или скачайте набор из API.</td></tr>';
     }
     apply();
-    ["#f-group", "#f-lang", "#f-channel"].forEach(s => $(s).addEventListener("change", apply));
+    ["#f-group", "#f-lang", "#f-channel", "#f-attn"].forEach(s => $(s).addEventListener("change", apply));
     $("#f-q").addEventListener("input", apply);
     $("#rows").addEventListener("click", e => {
       const b = e.target.closest("[data-open]"); const tr = e.target.closest("tr[data-id]");
@@ -136,6 +166,19 @@
     $("#btn-batch").addEventListener("click", async () => {
       const g = $("#f-group").value || groups[0]; if (!g) return toast("нет набора", true);
       try { await api("/api/evaluate/batch", "POST", { group_id: g, checklist_id: $("#batch-checklist").value || null }); pollJob(); }
+      catch (err) { toast(err.message, true); }
+    });
+    $("#btn-reeval").addEventListener("click", async () => {
+      const g = $("#f-group").value || groups[0]; if (!g) return toast("нет набора", true);
+      const n = convs.filter(c => c.group_id === g).length;
+      if (!confirm(`Заново оценить все ${n} диалогов набора ${g} текущей моделью (${modelLabel(state.settings)})? Старые оценки останутся в истории карточек.`)) return;
+      try { await api("/api/evaluate/batch", "POST", { group_id: g, checklist_id: $("#batch-checklist").value || null, force: true }); pollJob(); }
+      catch (err) { toast(err.message, true); }
+    });
+    $("#btn-clear").addEventListener("click", async () => {
+      const g = $("#f-group").value || groups[0]; if (!g) return toast("нет набора", true);
+      if (!confirm(`Удалить ВСЕ оценки и апелляции набора ${g}? Это нельзя отменить. Действие попадёт в журнал.`)) return;
+      try { const r = await api("/api/evaluations/delete", "POST", { group_id: g }); toast("Удалено оценок: " + r.removed); render(); }
       catch (err) { toast(err.message, true); }
     });
     $("#btn-export").addEventListener("click", async () => {
@@ -233,8 +276,7 @@
     const history = conv.evaluations.length > 1 ? `<select id="ev-hist" class="small" style="width:auto">${conv.evaluations.map(e => `<option value="${e.id}" ${e.id === ev.id ? "selected" : ""}>${esc(e.created_at.slice(0, 16).replace("T", " "))} · ${esc(e.checklist)} v${e.checklist_version} · ${fmtScore(e.total)}</option>`).join("")}</select>` : "";
     right.innerHTML = `
       <div class="row"><h3 style="margin:0">Результат</h3><span class="muted small">${esc(cl.name)} v${cl.version} · ${esc(ev.model || "")} · $${(ev.cost_usd || 0).toFixed(3)} · ${ev.duration_sec || 0} с</span><span class="grow"></span>${history}
-        <label class="small"><input type="radio" name="role" value="operator" ${state.role === "operator" ? "checked" : ""}> Оператор</label>
-        <label class="small"><input type="radio" name="role" value="reviewer" ${state.role === "reviewer" ? "checked" : ""}> Проверяющий</label></div>
+        <button class="btn danger sm" id="ev-delete">Удалить оценку</button></div>
       <div class="total" style="margin:10px 0">
         <span class="big score ${scoreClass(fs.total)}">${fmtScore(fs.total)}</span><span class="muted">из ${fs.max_total == null ? "—" : fs.max_total}</span>
         ${changed ? `<span class="strike" title="исходная оценка">${fmtScore(ev.score.total)}</span><span class="tag">финальный после пересмотра</span>` : ""}
@@ -278,7 +320,11 @@
         <button class="btn sm" data-decide="${open.id}" data-crit="${esc(c.id)}">Сохранить</button></div>`;
     }
 
-    right.querySelectorAll('input[name=role]').forEach(r => r.addEventListener("change", () => { state.role = r.value; renderResult(conv, ev); }));
+    $("#ev-delete").addEventListener("click", async () => {
+      if (!confirm("Удалить эту оценку вместе с апелляциями? Это нельзя отменить. Действие попадёт в журнал.")) return;
+      try { await api("/api/evaluations/" + ev.id, "DELETE"); toast("Оценка удалена"); go("/card/" + encodeURIComponent(conv.conversation_id)); render(); }
+      catch (err) { toast(err.message, true); }
+    });
     const hist = $("#ev-hist"); if (hist) hist.addEventListener("change", () => go("/card/" + encodeURIComponent(conv.conversation_id) + "/" + hist.value));
     right.onclick = async e => {
       const evb = e.target.closest("[data-ev]"); if (evb) return highlight([+evb.dataset.ev]);
@@ -317,7 +363,59 @@
         <td class="small">${esc(a.comment)}</td><td class="small">${a.decision ? (a.decision.action === "confirm" ? "подтверждена" : "изменена → " + esc(answerLabel({}, a.decision.new_answer))) + ": " + esc(a.decision.reason) : "—"}</td>
         <td class="small">${esc(a.created_at.slice(0, 16).replace("T", " "))}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">Апелляций нет</td></tr>'}
     </tbody></table></div>`;
-    view.querySelectorAll("tr[data-go]").forEach(tr => tr.addEventListener("click", () => { state.role = "reviewer"; go(tr.dataset.go); }));
+    view.querySelectorAll("tr[data-go]").forEach(tr => tr.addEventListener("click", () => { setRole("reviewer"); go(tr.dataset.go); }));
+  }
+
+  // ------------------------------------------------------------ analytics
+  async function renderAnalytics() {
+    const [groups, a] = await Promise.all([api("/api/datasets"), api("/api/analytics?group=" + encodeURIComponent(state.agroup || ""))]);
+    const bar = (label, value, max, text, tip) => `<div class="bar-row" title="${esc(tip || label + ": " + text)}"><span class="bar-label">${esc(label)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${max && value != null ? Math.max(0, value / max * 100) : 0}%"></span></span><span class="bar-value">${text}</span></div>`;
+    const avgRows = list => list.map(x => bar(x.key, x.avg, 100, `${fmtScore(x.avg)} <span class="muted">· ${x.count}</span>`, `${x.key}: средний балл ${fmtScore(x.avg)}, оценок ${x.count}`)).join("") || '<div class="muted small">Нет данных</div>';
+    const maxBin = Math.max(1, ...a.distribution.map(d => d.count));
+    view.innerHTML = `<div class="row" style="margin-bottom:14px"><h2 style="margin:0">Аналитика</h2>
+        <span class="muted small">По последней оценке каждого диалога, с учётом апелляций</span><span class="grow"></span>
+        <select id="an-group" style="width:160px"><option value="">Все наборы</option>${groups.map(g => `<option ${state.agroup === g.group_id ? "selected" : ""}>${esc(g.group_id)}</option>`).join("")}</select></div>
+      <div class="kpis" style="margin-bottom:16px">
+        <div class="kpi"><b>${a.count}</b><span>оценено диалогов</span></div>
+        <div class="kpi accent"><b>${fmtScore(a.avg)}</b><span>средний балл</span></div>
+        <div class="kpi ${a.critical ? "alert" : ""}"><b>${a.critical}</b><span>с грубыми ошибками</span></div>
+        <div class="kpi"><b>${a.appeals_open}</b><span>открытых апелляций</span></div>
+        <div class="kpi"><b>${a.appeals_changed}</b><span>оценок изменено по апелляции</span></div>
+      </div>
+      ${a.count ? `<div class="an-grid">
+        <div class="panel"><h3 style="margin-top:0">Средний результат по критериям, % от максимума</h3>
+          ${a.criteria.map(c => c.critical
+            ? bar(c.title, null, 100, `нарушений: <b>${c.fails}</b> из ${c.scored}`, `${c.title}: нарушения в ${c.fails} из ${c.scored} диалогов`)
+            : bar(c.title, c.avg_percent, 100, `${fmtScore(c.avg_percent)}% <span class="muted">· N/A ${c.na}</span>`, `${c.title}: ${fmtScore(c.avg_percent)}% в среднем, 0 баллов в ${c.fails} диалогах, N/A в ${c.na}`)).join("")}
+          <p class="small muted" style="margin:10px 0 0">Самые низкие строки показывают, чему в первую очередь учить операторов.</p></div>
+        <div class="panel"><h3 style="margin-top:0">Распределение итоговых баллов</h3>
+          ${a.distribution.map(d => bar(d.key, d.count, maxBin, String(d.count), `${d.key} баллов: ${d.count} диалогов`)).join("")}
+          <h3>По языкам</h3>${avgRows(a.by_language)}
+          <h3>По каналам</h3>${avgRows(a.by_channel.map(x => Object.assign({}, x, { key: x.key === "voice call" ? "звонок" : x.key === "agent chat" ? "чат" : x.key })))}
+          <h3>Динамика по дням оценки</h3>${avgRows(a.by_day)}
+          <p class="small muted" style="margin:10px 0 0">Разбивка по операторам появится, когда в данных диалога будет ID оператора (в Dynamics 365 он есть в карточке обращения).</p></div>
+      </div>` : '<div class="panel empty">Оценок пока нет. Оцените диалоги на вкладке «Диалоги».</div>'}`;
+    $("#an-group").addEventListener("change", e => { state.agroup = e.target.value; render(); });
+  }
+
+  // ------------------------------------------------------------ audit log
+  async function renderAudit() {
+    const list = await api("/api/audit");
+    const actors = [...new Set(list.map(a => a.actor))];
+    view.innerHTML = `<div class="row" style="margin-bottom:12px"><h2 style="margin:0">Журнал действий</h2>
+        <span class="muted small">Все изменения оценок, апелляций, чек-листов и настроек. Записи не редактируются и не удаляются.</span><span class="grow"></span>
+        <select id="a-actor" style="width:180px"><option value="">Все участники</option>${actors.map(a => `<option>${esc(a)}</option>`).join("")}</select>
+        <input id="a-q" type="text" placeholder="Поиск" style="width:200px"></div>
+      <div class="panel" style="padding:0"><table class="list"><thead><tr><th style="width:150px">Когда</th><th style="width:130px">Кто</th><th style="width:240px">Действие</th><th>Подробности</th></tr></thead><tbody id="a-rows"></tbody></table></div>`;
+    function apply() {
+      const who = $("#a-actor").value, q = $("#a-q").value.trim().toLowerCase();
+      const rows = list.filter(a => (!who || a.actor === who) && (!q || (a.action + " " + a.details).toLowerCase().includes(q)));
+      $("#a-rows").innerHTML = rows.map(a => `<tr><td class="small muted">${esc(a.at.slice(0, 19).replace("T", " "))}</td><td><span class="tag ${a.actor === "Проверяющий" ? "voice" : a.actor === "Оператор" ? "lang" : ""}">${esc(a.actor)}</span></td>
+        <td><b>${esc(a.action)}</b></td><td class="small">${esc(a.details)}</td></tr>`).join("") || '<tr><td colspan="4" class="empty">Записей нет</td></tr>';
+    }
+    apply();
+    $("#a-actor").addEventListener("change", apply); $("#a-q").addEventListener("input", apply);
   }
 
   // ------------------------------------------------------------ checklist editor

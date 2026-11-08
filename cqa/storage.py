@@ -329,3 +329,36 @@ def open_appeals():
             out.append({"evaluation_id": ev["id"], "conversation_id": ev["conversation_id"],
                         "checklist": ev["checklist"]["name"], **a})
     return sorted(out, key=lambda a: (a["status"] != "open", a["created_at"]))
+
+
+def delete_evaluations(ids):
+    removed = []
+    with _lock:
+        for eid in ids:
+            p = os.path.join(_eval_dir(), os.path.basename(eid) + ".json")
+            if os.path.exists(p):
+                removed.append({"id": eid, "conversation_id": _read(p)["conversation_id"]})
+                os.remove(p)
+    return removed
+
+
+# ---------------------------------------------------------------- audit log (append-only)
+
+def _audit_path():
+    return os.path.join(config.STORAGE_DIR, "audit.jsonl")
+
+
+def audit(action, details, actor):
+    entry = {"at": now_iso(), "actor": actor, "action": action, "details": details}
+    with _lock:
+        os.makedirs(config.STORAGE_DIR, exist_ok=True)
+        with open(_audit_path(), "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def list_audit(limit=500):
+    if not os.path.exists(_audit_path()):
+        return []
+    with open(_audit_path(), encoding="utf-8") as f:
+        lines = [l for l in f if l.strip()]
+    return [json.loads(l) for l in reversed(lines[-limit:])]
