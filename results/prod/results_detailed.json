@@ -1,0 +1,5984 @@
+{
+ "meta": {
+  "dataset_group_id": "FBROKER",
+  "generated_at": "2026-11-08T11:12:18+05:00",
+  "total_records": 10,
+  "ok_records": 10,
+  "error_records": 0,
+  "problems": [],
+  "avg_cost_usd_per_evaluation": 0
+ },
+ "evaluations": [
+  {
+   "id": "ev_20261108111120_b2b9d1",
+   "conversation_id": "p2-en-001",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "EN",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:11:20+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2497,
+      "output_tokens": 2294
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 65.1,
+   "validation_errors": [],
+   "summary": "Оператор успешно решил проблему клиента, однако в начале консультации допустил ошибку в управлении диалогом, дав слишком расплывчатый ответ, что привело к необходимости уточнения со стороны клиента.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор поздоровался на языке клиента и представился в первой реплике.",
+     "confidence": 1.0,
+     "points": 12.5,
+     "max_points": 12.5,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор уточнил, на каком именно сайте находится клиент, чтобы дать точный ответ.",
+     "confidence": 1.0,
+     "points": 18.75,
+     "max_points": 18.75,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "na",
+     "evidence_ids": [
+      0,
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Запрос общего характера (поиск кнопки входа на сайте), идентификация не требовалась.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 20.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "20",
+     "evidence_ids": [
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Запрос решен полностью: оператор предоставил корректный адрес для входа и альтернативу в виде приложения.",
+     "confidence": 1.0,
+     "points": 25.0,
+     "max_points": 25.0,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "yes",
+     "evidence_ids": [
+      13,
+      15
+     ],
+     "checked_range": null,
+     "explanation": "Оператор вежлив, извинился за неясность в предыдущем сообщении.",
+     "confidence": 1.0,
+     "points": 18.75,
+     "max_points": 18.75,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "4",
+     "evidence_ids": [
+      11,
+      12
+     ],
+     "checked_range": null,
+     "explanation": "Клиенту пришлось переспрашивать из-за слишком размытой и непонятной формулировки оператора в реплике [11].",
+     "confidence": 1.0,
+     "points": 7.5,
+     "max_points": 18.75,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "yes",
+     "evidence_ids": [
+      15
+     ],
+     "checked_range": null,
+     "explanation": "Оператор подтвердил успешный вход клиента (итог) и попрощался.",
+     "confidence": 1.0,
+     "points": 6.25,
+     "max_points": 6.25,
+     "weight": 5.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "no",
+     "evidence_ids": [
+      9,
+      11,
+      13,
+      15
+     ],
+     "checked_range": null,
+     "explanation": "Грубых ошибок не выявлено.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 88.75,
+    "max_total": 100,
+    "applicable_weight": 80.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 12.5,
+      "max_points": 12.5,
+      "points": 12.5
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 25.0,
+      "max_points": 25.0,
+      "points": 25.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "4",
+      "status": "scored",
+      "base_points": 6.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 7.5
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 6.25,
+      "max_points": 6.25,
+      "points": 6.25
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 31.25,
+      "max_points": 31.25,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 25.0,
+      "max_points": 25.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 32.5,
+      "max_points": 43.75,
+      "percent": 74.29
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 88.75,
+    "max_total": 100,
+    "applicable_weight": 80.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 12.5,
+      "max_points": 12.5,
+      "points": 12.5
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 25.0,
+      "max_points": 25.0,
+      "points": 25.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "4",
+      "status": "scored",
+      "base_points": 6.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 7.5
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 6.25,
+      "max_points": 6.25,
+      "points": 6.25
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 31.25,
+      "max_points": 31.25,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 25.0,
+      "max_points": 25.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 32.5,
+      "max_points": 43.75,
+      "percent": 74.29
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "yes",
+    "c02": "yes",
+    "c03": "na",
+    "c04": "20",
+    "c05": "yes",
+    "c06": "4",
+    "c07": "yes",
+    "c08": "no"
+   },
+   "has_changes": false
+  },
+  {
+   "id": "ev_20261108111218_6ed05a",
+   "conversation_id": "p2-en-002",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "EN",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:12:18+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2752,
+      "output_tokens": 2046
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 57.9,
+   "validation_errors": [],
+   "summary": "Оператор качественно провел консультацию: вежливо поприветствовал клиента, предоставил точные инструкции по поиску документов и тарифов, подвел итог и корректно завершил диалог.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор поздоровался на языке клиента и представился в первой реплике.",
+     "confidence": 1.0,
+     "points": 15.38,
+     "max_points": 15.38,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "na",
+     "evidence_ids": [
+      0,
+      4
+     ],
+     "checked_range": null,
+     "explanation": "Запрос клиента был сформулирован полно с самого начала, уточнения не требовались.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 15.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "na",
+     "evidence_ids": [
+      9,
+      11,
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Запрос касался инструкций по навигации в приложении и веб-версии, персональные данные не раскрывались, идентификация не требовалась.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 20.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "20",
+     "evidence_ids": [
+      9,
+      11,
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Все вопросы клиента (как найти отчет, где искать тариф в отчете и как увидеть текущий тариф без скачивания) решены полностью и корректно.",
+     "confidence": 1.0,
+     "points": 30.77,
+     "max_points": 30.77,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "yes",
+     "evidence_ids": [
+      9,
+      20
+     ],
+     "checked_range": null,
+     "explanation": "Оператор был вежлив и корректен на протяжении всего диалога.",
+     "confidence": 1.0,
+     "points": 23.08,
+     "max_points": 23.08,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "10",
+     "evidence_ids": [
+      9,
+      11,
+      13,
+      16,
+      18
+     ],
+     "checked_range": null,
+     "explanation": "Ответы ясные, последовательные и понятные.",
+     "confidence": 1.0,
+     "points": 23.08,
+     "max_points": 23.08,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "yes",
+     "evidence_ids": [
+      20
+     ],
+     "checked_range": null,
+     "explanation": "Оператор подвел итог консультации и попрощался с клиентом.",
+     "confidence": 1.0,
+     "points": 7.69,
+     "max_points": 7.69,
+     "weight": 5.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "no",
+     "evidence_ids": [
+      9,
+      11,
+      13,
+      16,
+      18,
+      20
+     ],
+     "checked_range": null,
+     "explanation": "Грубых нарушений не выявлено.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 65.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 15.38,
+      "max_points": 15.38,
+      "points": 15.38
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 30.77,
+      "max_points": 30.77,
+      "points": 30.77
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 7.69,
+      "max_points": 7.69,
+      "points": 7.69
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 15.38,
+      "max_points": 15.38,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 30.77,
+      "max_points": 30.77,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 53.85,
+      "max_points": 53.85,
+      "percent": 100.0
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 65.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 15.38,
+      "max_points": 15.38,
+      "points": 15.38
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 30.77,
+      "max_points": 30.77,
+      "points": 30.77
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 7.69,
+      "max_points": 7.69,
+      "points": 7.69
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 15.38,
+      "max_points": 15.38,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 30.77,
+      "max_points": 30.77,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 53.85,
+      "max_points": 53.85,
+      "percent": 100.0
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "yes",
+    "c02": "na",
+    "c03": "na",
+    "c04": "20",
+    "c05": "yes",
+    "c06": "10",
+    "c07": "yes",
+    "c08": "no"
+   },
+   "has_changes": false
+  },
+  {
+   "id": "ev_20261108110704_c4e5b8",
+   "conversation_id": "p2-kz-001",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "KZ",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:07:04+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2670,
+      "output_tokens": 1846
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 54.6,
+   "validation_errors": [],
+   "summary": "Оператор качественно отработал запрос: вежливо поприветствовал, уточнил валюту, предоставил точную инструкцию по поиску реквизитов в приложении и корректно завершил диалог.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор поздоровался на языке клиента и представился в первой реплике.",
+     "confidence": 1.0,
+     "points": 12.5,
+     "max_points": 12.5,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор уточнил необходимую деталь (валюту перевода) перед предоставлением инструкции.",
+     "confidence": 1.0,
+     "points": 18.75,
+     "max_points": 18.75,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "na",
+     "evidence_ids": [
+      12
+     ],
+     "checked_range": null,
+     "explanation": "Запрос носил общий характер (инструкция по навигации в приложении), персональные данные счёта в чате не раскрывались.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 20.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "20",
+     "evidence_ids": [
+      12
+     ],
+     "checked_range": null,
+     "explanation": "Запрос решён полностью: оператор предоставил точный путь в приложении для получения реквизитов, клиент подтвердил успех.",
+     "confidence": 1.0,
+     "points": 25.0,
+     "max_points": 25.0,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "yes",
+     "evidence_ids": [
+      9,
+      14
+     ],
+     "checked_range": null,
+     "explanation": "Оператор был вежлив на протяжении всего диалога.",
+     "confidence": 1.0,
+     "points": 18.75,
+     "max_points": 18.75,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "10",
+     "evidence_ids": [
+      9,
+      12,
+      14
+     ],
+     "checked_range": null,
+     "explanation": "Диалог последовательный, ответы ясные и понятные.",
+     "confidence": 1.0,
+     "points": 18.75,
+     "max_points": 18.75,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "yes",
+     "evidence_ids": [
+      14
+     ],
+     "checked_range": null,
+     "explanation": "Оператор подвёл итог (выразил радость от помощи) и попрощался.",
+     "confidence": 1.0,
+     "points": 6.25,
+     "max_points": 6.25,
+     "weight": 5.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "no",
+     "evidence_ids": [
+      9,
+      12,
+      14
+     ],
+     "checked_range": null,
+     "explanation": "Грубых ошибок не выявлено.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 80.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 12.5,
+      "max_points": 12.5,
+      "points": 12.5
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 25.0,
+      "max_points": 25.0,
+      "points": 25.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 6.25,
+      "max_points": 6.25,
+      "points": 6.25
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 31.25,
+      "max_points": 31.25,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 25.0,
+      "max_points": 25.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 43.75,
+      "max_points": 43.75,
+      "percent": 100.0
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 80.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 12.5,
+      "max_points": 12.5,
+      "points": 12.5
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 25.0,
+      "max_points": 25.0,
+      "points": 25.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 18.75
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 6.25,
+      "max_points": 6.25,
+      "points": 6.25
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 31.25,
+      "max_points": 31.25,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 25.0,
+      "max_points": 25.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 43.75,
+      "max_points": 43.75,
+      "percent": 100.0
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "yes",
+    "c02": "yes",
+    "c03": "na",
+    "c04": "20",
+    "c05": "yes",
+    "c06": "10",
+    "c07": "yes",
+    "c08": "no"
+   },
+   "has_changes": false
+  },
+  {
+   "id": "ev_20261108110825_a7e742",
+   "conversation_id": "p2-kz-002",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "KZ",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:08:25+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2590,
+      "output_tokens": 2533
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 81.0,
+   "validation_errors": [],
+   "summary": "Оператор допустил критические ошибки в качестве консультации: предоставил противоречивую информацию (утверждая, что отклоненный заказ исполнен), проигнорировал уточняющий вопрос клиента и закрыл чат без прощания и решения проблемы.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор поздоровался на языке клиента и представился в первой реплике.",
+     "confidence": 1.0,
+     "points": 12.5,
+     "max_points": 12.5,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "no",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": [
+      9,
+      9
+     ],
+     "explanation": "Оператор не уточнил детали заказа или данные счета для проверки причины отклонения, сразу дав противоречивый ответ.",
+     "confidence": 0.9,
+     "points": 0.0,
+     "max_points": 18.75,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "na",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Запрос не требовал идентификации, так как персональные данные не раскрывались и защищенные действия не выполнялись.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 20.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "0",
+     "evidence_ids": [
+      9,
+      10
+     ],
+     "checked_range": [
+      9,
+      10
+     ],
+     "explanation": "Ответ по существу отсутствует или ошибочен: оператор утверждает, что отклоненный заказ считается исполненным, и закрывает чат, не решив проблему.",
+     "confidence": 1.0,
+     "points": 0.0,
+     "max_points": 25.0,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "no",
+     "evidence_ids": [
+      10
+     ],
+     "checked_range": [
+      10,
+      10
+     ],
+     "explanation": "Оператор проигнорировал недоумение клиента и закрыл чат, не проявив клиентоориентированности.",
+     "confidence": 0.9,
+     "points": 0.0,
+     "max_points": 18.75,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "4",
+     "evidence_ids": [
+      9,
+      10
+     ],
+     "checked_range": [
+      9,
+      10
+     ],
+     "explanation": "Логика ответа оператора противоречива, из-за чего клиенту пришлось переспрашивать.",
+     "confidence": 0.9,
+     "points": 7.5,
+     "max_points": 18.75,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "no",
+     "evidence_ids": [
+      10,
+      11
+     ],
+     "checked_range": [
+      10,
+      11
+     ],
+     "explanation": "Завершение — Нет. Оператор закрыл чат без итога, предложения помощи и прощания после вопроса клиента.",
+     "confidence": 1.0,
+     "points": 0.0,
+     "max_points": 6.25,
+     "weight": 5.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "no",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Грубых ошибок не выявлено.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 20.0,
+    "max_total": 100,
+    "applicable_weight": 80.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 12.5,
+      "max_points": 12.5,
+      "points": 12.5
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "0",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 25.0,
+      "max_points": 25.0,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "4",
+      "status": "scored",
+      "base_points": 6.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 7.5
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 6.25,
+      "max_points": 6.25,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 12.5,
+      "max_points": 31.25,
+      "percent": 40.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 0.0,
+      "max_points": 25.0,
+      "percent": 0.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 7.5,
+      "max_points": 43.75,
+      "percent": 17.14
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 20.0,
+    "max_total": 100,
+    "applicable_weight": 80.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 12.5,
+      "max_points": 12.5,
+      "points": 12.5
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "0",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 25.0,
+      "max_points": 25.0,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "4",
+      "status": "scored",
+      "base_points": 6.0,
+      "effective_weight": 18.75,
+      "max_points": 18.75,
+      "points": 7.5
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 6.25,
+      "max_points": 6.25,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 12.5,
+      "max_points": 31.25,
+      "percent": 40.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 0.0,
+      "max_points": 25.0,
+      "percent": 0.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 7.5,
+      "max_points": 43.75,
+      "percent": 17.14
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "yes",
+    "c02": "no",
+    "c03": "na",
+    "c04": "0",
+    "c05": "no",
+    "c06": "4",
+    "c07": "no",
+    "c08": "no"
+   },
+   "has_changes": false
+  },
+  {
+   "id": "ev_20261108110920_032ea9",
+   "conversation_id": "p2-kz-003",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "KZ",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:09:20+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2680,
+      "output_tokens": 1986
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 54.6,
+   "validation_errors": [],
+   "summary": "Оператор корректно проконсультировал клиента по продукту и соблюдал правила ведения диалога, однако совершил критическое нарушение, предложив клиенту перевести денежные средства на личный счет для инвестирования в обход компании.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор поздоровался на языке клиента и представился в первой реплике.",
+     "confidence": 1.0,
+     "points": 15.38,
+     "max_points": 15.38,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "na",
+     "evidence_ids": [
+      0
+     ],
+     "checked_range": null,
+     "explanation": "Клиент с самого начала изложил запрос полно, уточнения не требовались.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 15.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "na",
+     "evidence_ids": [
+      0,
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Запрос носил общий характер (функционал счетов), идентификация не требовалась.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 20.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "20",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор корректно и полно ответил на вопрос о возможности использования D-счета для покупки акций.",
+     "confidence": 1.0,
+     "points": 30.77,
+     "max_points": 30.77,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "yes",
+     "evidence_ids": [
+      9,
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Оператор общался вежливо, недовольств со стороны клиента не зафиксировано.",
+     "confidence": 1.0,
+     "points": 23.08,
+     "max_points": 23.08,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "10",
+     "evidence_ids": [
+      9,
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Ответы ясные, последовательные, диалог структурирован.",
+     "confidence": 1.0,
+     "points": 23.08,
+     "max_points": 23.08,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "yes",
+     "evidence_ids": [
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Оператор предложил дальнейшую помощь и попрощался.",
+     "confidence": 1.0,
+     "points": 7.69,
+     "max_points": 7.69,
+     "weight": 5.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "yes",
+     "evidence_ids": [
+      11
+     ],
+     "checked_range": null,
+     "explanation": "Грубая ошибка: оператор предложил клиенту перевести деньги лично ему для инвестирования в обход компании.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 65.0,
+    "critical_error": true,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 15.38,
+      "max_points": 15.38,
+      "points": 15.38
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 30.77,
+      "max_points": 30.77,
+      "points": 30.77
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 7.69,
+      "max_points": 7.69,
+      "points": 7.69
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "yes",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 15.38,
+      "max_points": 15.38,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 30.77,
+      "max_points": 30.77,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 53.85,
+      "max_points": 53.85,
+      "percent": 100.0
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 65.0,
+    "critical_error": true,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 15.38,
+      "max_points": 15.38,
+      "points": 15.38
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 30.77,
+      "max_points": 30.77,
+      "points": 30.77
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 7.69,
+      "max_points": 7.69,
+      "points": 7.69
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "yes",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 15.38,
+      "max_points": 15.38,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 30.77,
+      "max_points": 30.77,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 53.85,
+      "max_points": 53.85,
+      "percent": 100.0
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "yes",
+    "c02": "na",
+    "c03": "na",
+    "c04": "20",
+    "c05": "yes",
+    "c06": "10",
+    "c07": "yes",
+    "c08": "yes"
+   },
+   "has_changes": false
+  },
+  {
+   "id": "ev_20261108111015_e5bd94",
+   "conversation_id": "p2-kz-004",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "KZ",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:10:15+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2513,
+      "output_tokens": 1789
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 55.3,
+   "validation_errors": [],
+   "summary": "Оператор корректно установил контакт, однако клиент покинул чат сразу после приветствия, не успев задать вопрос.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор поздоровался на языке клиента и представился в первом сообщении.",
+     "confidence": 1.0,
+     "points": 25.0,
+     "max_points": 25.0,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "na",
+     "evidence_ids": [
+      4,
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Клиент не сформулировал запрос до ухода из чата, оператор попытался уточнить потребность в реплике [9].",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 15.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "na",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Запрос не требовал идентификации, защищенные действия не выполнялись.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 20.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "na",
+     "evidence_ids": [
+      10
+     ],
+     "checked_range": null,
+     "explanation": "Чат закончился до того, как клиент сформулировал запрос.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 20.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор вежлив в единственной реплике.",
+     "confidence": 1.0,
+     "points": 37.5,
+     "max_points": 37.5,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "10",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Ответ оператора ясен и корректен.",
+     "confidence": 1.0,
+     "points": 37.5,
+     "max_points": 37.5,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "na",
+     "evidence_ids": [
+      10
+     ],
+     "checked_range": null,
+     "explanation": "Клиент покинул чат до того, как оператор мог завершить диалог.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 5.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "no",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Грубых ошибок не выявлено.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 40.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 25.0,
+      "max_points": 25.0,
+      "points": 25.0
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 37.5,
+      "max_points": 37.5,
+      "points": 37.5
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 37.5,
+      "max_points": 37.5,
+      "points": 37.5
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 25.0,
+      "max_points": 25.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 75.0,
+      "max_points": 75.0,
+      "percent": 100.0
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 40.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 25.0,
+      "max_points": 25.0,
+      "points": 25.0
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 37.5,
+      "max_points": 37.5,
+      "points": 37.5
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 37.5,
+      "max_points": 37.5,
+      "points": 37.5
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 25.0,
+      "max_points": 25.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 75.0,
+      "max_points": 75.0,
+      "percent": 100.0
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "yes",
+    "c02": "na",
+    "c03": "na",
+    "c04": "na",
+    "c05": "yes",
+    "c06": "10",
+    "c07": "na",
+    "c08": "no"
+   },
+   "has_changes": false
+  },
+  {
+   "id": "ev_20261108110209_5b057e",
+   "conversation_id": "p2-ru-001",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "RU",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:02:09+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2460,
+      "output_tokens": 2147
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 74.7,
+   "validation_errors": [],
+   "summary": "Оператор вежливо и оперативно помог клиенту найти информацию о тарифе в веб-версии. Единственным недочетом стало отсутствие ответа на вторую часть вопроса (про отчет), но клиент самостоятельно закрыл этот вопрос, удовлетворив себя первым ответом. Завершение диалога выполнено корректно.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор поздоровался и представился в первой реплике.",
+     "confidence": 1.0,
+     "points": 15.38,
+     "max_points": 15.38,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "na",
+     "evidence_ids": [
+      0
+     ],
+     "checked_range": null,
+     "explanation": "Клиент с самого начала изложил запрос полно, уточнять было нечего.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 15.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "na",
+     "evidence_ids": [
+      0,
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Запрос касался навигации по интерфейсу (где найти тариф), персональные данные не раскрывались.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 20.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "15",
+     "evidence_ids": [
+      9,
+      10
+     ],
+     "checked_range": null,
+     "explanation": "Основной вопрос решён (путь в веб-версии указан), но оператор пропустил вторую часть запроса клиента о названии раздела в отчёте. Однако клиент принял этот вариант и решил посмотреть отчёт позже.",
+     "confidence": 0.9,
+     "points": 23.08,
+     "max_points": 30.77,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "yes",
+     "evidence_ids": [
+      9,
+      11
+     ],
+     "checked_range": null,
+     "explanation": "Оператор вежлив, соблюдает нормы делового общения.",
+     "confidence": 1.0,
+     "points": 23.08,
+     "max_points": 23.08,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "10",
+     "evidence_ids": [
+      9,
+      11
+     ],
+     "checked_range": null,
+     "explanation": "Ответы ясные, последовательные и грамотные.",
+     "confidence": 1.0,
+     "points": 23.08,
+     "max_points": 23.08,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "yes",
+     "evidence_ids": [
+      11
+     ],
+     "checked_range": null,
+     "explanation": "Оператор предложил дальнейшую помощь и попрощался.",
+     "confidence": 1.0,
+     "points": 7.69,
+     "max_points": 7.69,
+     "weight": 5.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "no",
+     "evidence_ids": [
+      9,
+      11
+     ],
+     "checked_range": null,
+     "explanation": "Грубых ошибок не выявлено.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 92.31,
+    "max_total": 100,
+    "applicable_weight": 65.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 15.38,
+      "max_points": 15.38,
+      "points": 15.38
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "15",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 30.77,
+      "max_points": 30.77,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 7.69,
+      "max_points": 7.69,
+      "points": 7.69
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 15.38,
+      "max_points": 15.38,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 23.08,
+      "max_points": 30.77,
+      "percent": 75.01
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 53.85,
+      "max_points": 53.85,
+      "percent": 100.0
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 92.31,
+    "max_total": 100,
+    "applicable_weight": 65.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 15.38,
+      "max_points": 15.38,
+      "points": 15.38
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "15",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 30.77,
+      "max_points": 30.77,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 23.08
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 7.69,
+      "max_points": 7.69,
+      "points": 7.69
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 15.38,
+      "max_points": 15.38,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 23.08,
+      "max_points": 30.77,
+      "percent": 75.01
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 53.85,
+      "max_points": 53.85,
+      "percent": 100.0
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "yes",
+    "c02": "na",
+    "c03": "na",
+    "c04": "15",
+    "c05": "yes",
+    "c06": "10",
+    "c07": "yes",
+    "c08": "no"
+   },
+   "has_changes": false
+  },
+  {
+   "id": "ev_20261108110313_9d1554",
+   "conversation_id": "p2-ru-002",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "RU",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:03:13+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2492,
+      "output_tokens": 2005
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 63.8,
+   "validation_errors": [],
+   "summary": "Оператор корректно установил контакт и ответил на первую часть вопроса (где обновить данные), однако полностью проигнорировал вторую часть запроса о сроках вывода средств. Несмотря на повторный вопрос и выражение недовольства клиентом, оператор дал бессмысленный ответ и завершил диалог, не решив проблему. Завершение по форме выполнено верно.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор поздоровался и представился в первой реплике.",
+     "confidence": 1.0,
+     "points": 15.38,
+     "max_points": 15.38,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "na",
+     "evidence_ids": [
+      0
+     ],
+     "checked_range": null,
+     "explanation": "Запрос клиента был сформулирован полно с самого начала.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 15.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "na",
+     "evidence_ids": [
+      0,
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Запрос касался общего порядка действий в приложении, данные счёта не раскрывались.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 20.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "0",
+     "evidence_ids": [
+      11,
+      13
+     ],
+     "checked_range": [
+      10,
+      13
+     ],
+     "explanation": "Оператор проигнорировал вопрос клиента о сроках повторного вывода средств и закрыл чат, не дав ответа по существу.",
+     "confidence": 1.0,
+     "points": 0.0,
+     "max_points": 30.77,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "no",
+     "evidence_ids": [
+      11,
+      13
+     ],
+     "checked_range": [
+      10,
+      13
+     ],
+     "explanation": "Оператор не отреагировал на недовольство клиента тем, что вывод средств не работает второй день, и проигнорировал уточняющий вопрос.",
+     "confidence": 1.0,
+     "points": 0.0,
+     "max_points": 23.08,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "4",
+     "evidence_ids": [
+      11,
+      12
+     ],
+     "checked_range": [
+      10,
+      12
+     ],
+     "explanation": "Ответ оператора в реплике [11] не соответствовал вопросу клиента, из-за чего клиенту пришлось переспрашивать.",
+     "confidence": 1.0,
+     "points": 9.23,
+     "max_points": 23.08,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "yes",
+     "evidence_ids": [
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Оператор предложил дальнейшую помощь и попрощался.",
+     "confidence": 1.0,
+     "points": 7.69,
+     "max_points": 7.69,
+     "weight": 5.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "no",
+     "evidence_ids": [
+      9,
+      11,
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Грубых нарушений не выявлено.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 32.31,
+    "max_total": 100,
+    "applicable_weight": 65.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 15.38,
+      "max_points": 15.38,
+      "points": 15.38
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "0",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 30.77,
+      "max_points": 30.77,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "4",
+      "status": "scored",
+      "base_points": 6.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 9.23
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 7.69,
+      "max_points": 7.69,
+      "points": 7.69
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 15.38,
+      "max_points": 15.38,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 0.0,
+      "max_points": 30.77,
+      "percent": 0.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 16.92,
+      "max_points": 53.85,
+      "percent": 31.42
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 32.31,
+    "max_total": 100,
+    "applicable_weight": 65.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 15.38,
+      "max_points": 15.38,
+      "points": 15.38
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "0",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 30.77,
+      "max_points": 30.77,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "4",
+      "status": "scored",
+      "base_points": 6.0,
+      "effective_weight": 23.08,
+      "max_points": 23.08,
+      "points": 9.23
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 7.69,
+      "max_points": 7.69,
+      "points": 7.69
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 15.38,
+      "max_points": 15.38,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 0.0,
+      "max_points": 30.77,
+      "percent": 0.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 16.92,
+      "max_points": 53.85,
+      "percent": 31.42
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "yes",
+    "c02": "na",
+    "c03": "na",
+    "c04": "0",
+    "c05": "no",
+    "c06": "4",
+    "c07": "yes",
+    "c08": "no"
+   },
+   "has_changes": false
+  },
+  {
+   "id": "ev_20261108110419_d10f23",
+   "conversation_id": "p2-ru-003",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "RU",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:04:19+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2722,
+      "output_tokens": 2373
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 66.0,
+   "validation_errors": [],
+   "summary": "Оператор отработал диалог идеально: соблюдены все стандарты приветствия, идентификации, проявлена эмпатия, запрос решен корректно с четким завершением.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор поздоровался и представился в первой реплике.",
+     "confidence": 1.0,
+     "points": 10.0,
+     "max_points": 10.0,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "yes",
+     "evidence_ids": [
+      12
+     ],
+     "checked_range": null,
+     "explanation": "Оператор уточнил время и валюту перевода перед тем, как передать запрос специалистам.",
+     "confidence": 1.0,
+     "points": 15.0,
+     "max_points": 15.0,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "yes",
+     "evidence_ids": [
+      9,
+      11
+     ],
+     "checked_range": null,
+     "explanation": "Идентификация была запрошена оператором и подтверждена системой до раскрытия деталей платежа.",
+     "confidence": 1.0,
+     "points": 20.0,
+     "max_points": 20.0,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "20",
+     "evidence_ids": [
+      14,
+      17,
+      19
+     ],
+     "checked_range": null,
+     "explanation": "Запрос решен полностью: оператор объяснил разницу в статусах, передал запрос специалистам и обозначил следующий шаг.",
+     "confidence": 1.0,
+     "points": 20.0,
+     "max_points": 20.0,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "yes",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": null,
+     "explanation": "Оператор проявил эмпатию, отметив, что понимает чувства клиента по поводу отсутствия денег на счете.",
+     "confidence": 1.0,
+     "points": 15.0,
+     "max_points": 15.0,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "10",
+     "evidence_ids": [
+      9,
+      12,
+      14,
+      17,
+      19,
+      21
+     ],
+     "checked_range": null,
+     "explanation": "Диалог велся последовательно, ответы ясные и структурированные.",
+     "confidence": 1.0,
+     "points": 15.0,
+     "max_points": 15.0,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "yes",
+     "evidence_ids": [
+      21
+     ],
+     "checked_range": null,
+     "explanation": "Оператор подвел итог (сообщил, что действий больше не требуется) и попрощался.",
+     "confidence": 1.0,
+     "points": 5.0,
+     "max_points": 5.0,
+     "weight": 5.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "no",
+     "evidence_ids": [
+      9,
+      12,
+      14,
+      17,
+      19,
+      21
+     ],
+     "checked_range": null,
+     "explanation": "Грубых нарушений не выявлено.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 100.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 10.0,
+      "max_points": 10.0,
+      "points": 10.0
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 15.0,
+      "max_points": 15.0,
+      "points": 15.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 20.0,
+      "max_points": 20.0,
+      "points": 20.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 20.0,
+      "max_points": 20.0,
+      "points": 20.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 15.0,
+      "max_points": 15.0,
+      "points": 15.0
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 15.0,
+      "max_points": 15.0,
+      "points": 15.0
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 5.0,
+      "max_points": 5.0,
+      "points": 5.0
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 25.0,
+      "max_points": 25.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 40.0,
+      "max_points": 40.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 35.0,
+      "max_points": 35.0,
+      "percent": 100.0
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 100.0,
+    "max_total": 100,
+    "applicable_weight": 100.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 10.0,
+      "max_points": 10.0,
+      "points": 10.0
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 15.0,
+      "max_points": 15.0,
+      "points": 15.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 20.0,
+      "max_points": 20.0,
+      "points": 20.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "20",
+      "status": "scored",
+      "base_points": 20.0,
+      "effective_weight": 20.0,
+      "max_points": 20.0,
+      "points": 20.0
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 15.0,
+      "max_points": 15.0,
+      "points": 15.0
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 15.0,
+      "effective_weight": 15.0,
+      "max_points": 15.0,
+      "points": 15.0
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "yes",
+      "status": "scored",
+      "base_points": 5.0,
+      "effective_weight": 5.0,
+      "max_points": 5.0,
+      "points": 5.0
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 25.0,
+      "max_points": 25.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 40.0,
+      "max_points": 40.0,
+      "percent": 100.0
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 35.0,
+      "max_points": 35.0,
+      "percent": 100.0
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "yes",
+    "c02": "yes",
+    "c03": "yes",
+    "c04": "20",
+    "c05": "yes",
+    "c06": "10",
+    "c07": "yes",
+    "c08": "no"
+   },
+   "has_changes": false
+  },
+  {
+   "id": "ev_20261108110610_620a10",
+   "conversation_id": "p2-ru-004",
+   "group_id": "FBROKER",
+   "channel": "agent chat",
+   "language": "RU",
+   "checklist": {
+    "id": "chat",
+    "version": 1,
+    "name": "Чек-лист качества чатов",
+    "channel": "agent chat",
+    "description": "Восемь критериев для оценки работы оператора по переписке (начальная конфигурация организаторов).",
+    "rounding": 2,
+    "sections": [
+     {
+      "id": "start",
+      "title": "Начало и понимание запроса"
+     },
+     {
+      "id": "safety",
+      "title": "Безопасность и решение"
+     },
+     {
+      "id": "flow",
+      "title": "Ведение и завершение диалога"
+     },
+     {
+      "id": "critical",
+      "title": "Грубые нарушения"
+     }
+    ],
+    "criteria": [
+     {
+      "id": "c01",
+      "section": "start",
+      "title": "Установление контакта",
+      "type": "binary",
+      "weight": 10,
+      "allow_na": false,
+      "description": "Да — оператор поздоровался на языке клиента и представился в первом ответе.",
+      "na_condition": "",
+      "code": "contact"
+     },
+     {
+      "id": "c02",
+      "section": "start",
+      "title": "Выявление потребности",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": true,
+      "description": "Да — оператор учёл известные детали и уточнил недостающее до ответа.",
+      "na_condition": "Данных для ответа хватало с самого начала.",
+      "code": "discovery"
+     },
+     {
+      "id": "c03",
+      "section": "safety",
+      "title": "Идентификация",
+      "type": "binary",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Да — проверка личности подтверждена до раскрытия данных или защищённого действия. Если требовалась проверка личности перед защищённым действием и она не подтверждена в чате, ставьте «Нет». Общий вопрос о тарифах не требует идентификации.",
+      "na_condition": "Запрос не требовал идентификации.",
+      "code": "identification"
+     },
+     {
+      "id": "c04",
+      "section": "safety",
+      "title": "Корректная и полная консультация",
+      "type": "scale",
+      "weight": 20,
+      "allow_na": true,
+      "description": "Оцените, правильно и полно ли решён запрос: ответ или корректный следующий шаг.",
+      "na_condition": "Чат закончился до того, как клиент сформулировал запрос.",
+      "scale": [
+       {
+        "value": 20,
+        "label": "Все существенные вопросы закрыты или дан корректный следующий шаг."
+       },
+       {
+        "value": 15,
+        "label": "Основной вопрос решён, пропущена второстепенная деталь."
+       },
+       {
+        "value": 10,
+        "label": "Часть запроса закрыта, существенный вопрос остался открытым."
+       },
+       {
+        "value": 5,
+        "label": "Есть общая подсказка, но клиенту всё ещё непонятно, как действовать."
+       },
+       {
+        "value": 0,
+        "label": "Ответа по существу нет или ключевая рекомендация ошибочна."
+       }
+      ],
+      "code": "consultation"
+     },
+     {
+      "id": "c05",
+      "section": "flow",
+      "title": "Эмпатия и клиентоориентированность",
+      "type": "binary",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Да — оператор вежлив и, если клиент выразил недовольство или описал неудобство, отреагировал на конкретную проблему.",
+      "na_condition": "",
+      "code": "empathy"
+     },
+     {
+      "id": "c06",
+      "section": "flow",
+      "title": "Управление диалогом, скорость и грамотность",
+      "type": "scale",
+      "weight": 15,
+      "allow_na": false,
+      "description": "Оцените ясность, порядок ответов и предупреждение об ожидании. Оценивается, насколько понятно и последовательно оператор общался (не правильность решения). Порог первой реакции, теги и вложения в оценку не входят.",
+      "na_condition": "",
+      "scale": [
+       {
+        "value": 10,
+        "label": "Ответы ясные и связные. Если было явное ожидание, оператор предупредил."
+       },
+       {
+        "value": 7,
+        "label": "Один заметный сбой, но клиент может понять ответ и продолжить."
+       },
+       {
+        "value": 4,
+        "label": "Клиенту приходится переспрашивать из-за формулировок или порядка ответов."
+       },
+       {
+        "value": 0,
+        "label": "Из-за бессвязных или противоречивых реплик ход диалога непонятен."
+       }
+      ],
+      "code": "dialogue"
+     },
+     {
+      "id": "c07",
+      "section": "flow",
+      "title": "Завершение",
+      "type": "binary",
+      "weight": 5,
+      "allow_na": true,
+      "description": "Да — оператор подвёл итог или предложил дальнейшую помощь и попрощался.",
+      "na_condition": "Чат оборвался до возможности его завершить.",
+      "code": "closure"
+     },
+     {
+      "id": "c08",
+      "section": "critical",
+      "title": "Грубые ошибки",
+      "type": "binary",
+      "weight": 0,
+      "critical": true,
+      "allow_na": false,
+      "description": "Да — выявлено оскорбление клиента, предложение платной услуги в обход компании (перевести деньги оператору лично для инвестирования, попросить личный номер для частной платной консультации — достаточно самого предложения) или раскрытие конфиденциальной информации. Нет — ни одно из трёх не выявлено.",
+      "na_condition": "",
+      "code": "critical"
+     }
+    ]
+   },
+   "created_at": "2026-11-08T11:06:10+05:00",
+   "provider": "ollama",
+   "model": "ollama:gemma4:31b",
+   "routing": "выбрано в настройках",
+   "attempts": [
+    {
+     "provider": "ollama",
+     "model": "ollama:gemma4:31b",
+     "usage": {
+      "input_tokens": 2479,
+      "output_tokens": 3465
+     }
+    }
+   ],
+   "cost_usd": 0.0,
+   "duration_sec": 110.4,
+   "validation_errors": [],
+   "summary": "Работа оператора неудовлетворительна: полностью проигнорированы правила приветствия и завершения диалога, нарушен протокол безопасности (раскрытие данных счёта без идентификации), а первая реплика была сформулирована крайне неясно.",
+   "results": [
+    {
+     "criterion_id": "c01",
+     "answer": "no",
+     "evidence_ids": [
+      9
+     ],
+     "checked_range": [
+      9,
+      9
+     ],
+     "explanation": "Установление контакта — Нет. Оператор не поздоровался и не представился в первой реплике.",
+     "confidence": 1.0,
+     "points": 0.0,
+     "max_points": 11.76,
+     "weight": 10.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c02",
+     "answer": "na",
+     "evidence_ids": [
+      0
+     ],
+     "checked_range": null,
+     "explanation": "Выявление потребности — N/A. Клиент с самого начала полно изложил запрос (проблема с выводом средств).",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 15.0,
+     "status": "na"
+    },
+    {
+     "criterion_id": "c03",
+     "answer": "no",
+     "evidence_ids": [
+      11
+     ],
+     "checked_range": [
+      9,
+      11
+     ],
+     "explanation": "Идентификация — Нет. Оператор раскрыл информацию об ограничении по конкретному счёту до подтверждения личности клиента.",
+     "confidence": 1.0,
+     "points": 0.0,
+     "max_points": 23.53,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c04",
+     "answer": "10",
+     "evidence_ids": [
+      11,
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Консультация — 10. Оператор сообщил о наличии ограничения и указал раздел в приложении, но не разъяснил причину проблемы.",
+     "confidence": 0.9,
+     "points": 11.76,
+     "max_points": 23.53,
+     "weight": 20.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c05",
+     "answer": "no",
+     "evidence_ids": [
+      9,
+      11,
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Эмпатия — Нет. Оператор общался в резком, сухом тоне, проигнорировав недовольство клиента в начале диалога.",
+     "confidence": 1.0,
+     "points": 0.0,
+     "max_points": 17.65,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c06",
+     "answer": "4",
+     "evidence_ids": [
+      9,
+      10
+     ],
+     "checked_range": null,
+     "explanation": "Управление диалогом — 4. Первая реплика оператора была бессвязной и непонятной, из-за чего клиенту пришлось переспрашивать.",
+     "confidence": 1.0,
+     "points": 7.06,
+     "max_points": 17.65,
+     "weight": 15.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c07",
+     "answer": "no",
+     "evidence_ids": [
+      13,
+      14
+     ],
+     "checked_range": [
+      13,
+      14
+     ],
+     "explanation": "Завершение — Нет. Оператор закрыл чат сразу после ответа, не предложив помощь и не попрощавшись.",
+     "confidence": 1.0,
+     "points": 0.0,
+     "max_points": 5.88,
+     "weight": 5.0,
+     "status": "scored"
+    },
+    {
+     "criterion_id": "c08",
+     "answer": "no",
+     "evidence_ids": [
+      9,
+      11,
+      13
+     ],
+     "checked_range": null,
+     "explanation": "Грубые ошибки — Нет. Оскорблений, предложений сторонних услуг или утечки данных третьим лицам не выявлено.",
+     "confidence": 1.0,
+     "points": null,
+     "max_points": null,
+     "weight": 0.0,
+     "status": "scored"
+    }
+   ],
+   "score": {
+    "total": 18.82,
+    "max_total": 100,
+    "applicable_weight": 85.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 11.76,
+      "max_points": 11.76,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 23.53,
+      "max_points": 23.53,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 23.53,
+      "max_points": 23.53,
+      "points": 11.76
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 17.65,
+      "max_points": 17.65,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "4",
+      "status": "scored",
+      "base_points": 6.0,
+      "effective_weight": 17.65,
+      "max_points": 17.65,
+      "points": 7.06
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 5.88,
+      "max_points": 5.88,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 0.0,
+      "max_points": 11.76,
+      "percent": 0.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 11.76,
+      "max_points": 47.06,
+      "percent": 24.99
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 7.06,
+      "max_points": 41.18,
+      "percent": 17.14
+     }
+    ]
+   },
+   "appeals": [],
+   "final_score": {
+    "total": 18.82,
+    "max_total": 100,
+    "applicable_weight": 85.0,
+    "critical_error": false,
+    "missing": [],
+    "criteria": [
+     {
+      "criterion_id": "c01",
+      "title": "Установление контакта",
+      "section": "start",
+      "type": "binary",
+      "weight": 10.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 11.76,
+      "max_points": 11.76,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c02",
+      "title": "Выявление потребности",
+      "section": "start",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "na",
+      "status": "na",
+      "points": null,
+      "max_points": null,
+      "effective_weight": 0.0
+     },
+     {
+      "criterion_id": "c03",
+      "title": "Идентификация",
+      "section": "safety",
+      "type": "binary",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 23.53,
+      "max_points": 23.53,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c04",
+      "title": "Корректная и полная консультация",
+      "section": "safety",
+      "type": "scale",
+      "weight": 20.0,
+      "critical": false,
+      "answer": "10",
+      "status": "scored",
+      "base_points": 10.0,
+      "effective_weight": 23.53,
+      "max_points": 23.53,
+      "points": 11.76
+     },
+     {
+      "criterion_id": "c05",
+      "title": "Эмпатия и клиентоориентированность",
+      "section": "flow",
+      "type": "binary",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 17.65,
+      "max_points": 17.65,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c06",
+      "title": "Управление диалогом, скорость и грамотность",
+      "section": "flow",
+      "type": "scale",
+      "weight": 15.0,
+      "critical": false,
+      "answer": "4",
+      "status": "scored",
+      "base_points": 6.0,
+      "effective_weight": 17.65,
+      "max_points": 17.65,
+      "points": 7.06
+     },
+     {
+      "criterion_id": "c07",
+      "title": "Завершение",
+      "section": "flow",
+      "type": "binary",
+      "weight": 5.0,
+      "critical": false,
+      "answer": "no",
+      "status": "scored",
+      "base_points": 0.0,
+      "effective_weight": 5.88,
+      "max_points": 5.88,
+      "points": 0.0
+     },
+     {
+      "criterion_id": "c08",
+      "title": "Грубые ошибки",
+      "section": "critical",
+      "type": "binary",
+      "weight": 0.0,
+      "critical": true,
+      "answer": "no",
+      "status": "scored",
+      "points": null,
+      "max_points": null
+     }
+    ],
+    "sections": [
+     {
+      "section_id": "start",
+      "title": "Начало и понимание запроса",
+      "points": 0.0,
+      "max_points": 11.76,
+      "percent": 0.0
+     },
+     {
+      "section_id": "safety",
+      "title": "Безопасность и решение",
+      "points": 11.76,
+      "max_points": 47.06,
+      "percent": 24.99
+     },
+     {
+      "section_id": "flow",
+      "title": "Ведение и завершение диалога",
+      "points": 7.06,
+      "max_points": 41.18,
+      "percent": 17.14
+     }
+    ]
+   },
+   "final_answers": {
+    "c01": "no",
+    "c02": "na",
+    "c03": "no",
+    "c04": "10",
+    "c05": "no",
+    "c06": "4",
+    "c07": "no",
+    "c08": "no"
+   },
+   "has_changes": false
+  }
+ ]
+}
