@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>CQA — astanait</title>
+<style>
+html,body{margin:0;height:100%;background:#0f1a24;color:#fff;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.s{display:none;height:100vh;box-sizing:border-box;padding:7vh 9vw;flex-direction:column;justify-content:center}
+.s.on{display:flex}
+h1{font-size:64px;margin:0 0 16px;line-height:1.05}
+h2{font-size:44px;margin:0 0 28px;color:#7ee8b4}
+p,li{font-size:26px;line-height:1.4;margin:0 0 10px}
+ul{margin:0;padding-left:28px}
+.k{font-size:20px;color:#9fb0c0;position:fixed;bottom:18px;right:28px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.card{background:#1b2a38;border-radius:18px;padding:22px 26px}
+.big{font-size:72px;font-weight:800;color:#7ee8b4;line-height:1}
+.m{color:#9fb0c0}
+table{border-collapse:collapse;font-size:24px}td,th{padding:8px 18px;border-bottom:1px solid #2a3c4d;text-align:left}th{color:#9fb0c0;font-weight:500}
+.acc{color:#7ee8b4}
+</style></head><body>
+
+<section class="s on">
+  <p class="m" style="font-size:22px">FREEDOM BROKER · DATA CHALLENGE'26</p>
+  <h1>CQA — оценка качества диалогов</h1>
+  <p style="font-size:30px">ИИ проверяет каждый чат и звонок оператора по чек-листу и объясняет каждую оценку репликой из диалога.</p>
+  <p class="m">Команда astanait · Bakdaulet Dagystanov, Ризат</p>
+</section>
+
+<section class="s">
+  <h2>Проблема</h2>
+  <ul>
+    <li>Контроль качества слушает <b>1–3% диалогов</b> вручную, остальное — слепая зона.</li>
+    <li>Оценка субъективна, оператору трудно её оспорить.</li>
+    <li>Три языка — RU, KZ, EN — и два канала: чаты и звонки.</li>
+  </ul>
+</section>
+
+<section class="s">
+  <h2>Что мы сделали</h2>
+  <div class="g">
+    <div class="card"><p><b>Оценка 100% диалогов</b></p><p class="m">8 критериев, веса, N/A с перераспределением, флаг грубых ошибок — всё по чек-листу организаторов, арифметика в коде, не в модели.</p></div>
+    <div class="card"><p><b>Доказательства</b></p><p class="m">По каждому критерию: ответ, баллы, объяснение и ссылка на реплику. Для звонков — переход к моменту записи и метрики пауз.</p></div>
+    <div class="card"><p><b>Апелляция</b></p><p class="m">Оператор оспаривает критерий, проверяющий подтверждает или меняет оценку с причиной, итог пересчитывается, история хранится.</p></div>
+    <div class="card"><p><b>Гибкие чек-листы</b></p><p class="m">Редактор критериев с версиями: отдельные чек-листы для чатов и звонков, новая версия применяется в один клик.</p></div>
+  </div>
+</section>
+
+<section class="s">
+  <h2>Модель: локально, без утечки данных</h2>
+  <div class="g">
+    <div class="card"><p class="big">$0</p><p>за оценку: Gemma 4 31B работает на обычном ноутбуке через Ollama. Диалоги клиентов не покидают контур компании.</p></div>
+    <div class="card"><p class="big">52 с</p><p>на чат, 100 с на звонок. Быстрый режим Qwen 3.6 — 15 с. Внешние API (Claude, Gemini) подключаются переключателем, если нужны.</p></div>
+  </div>
+  <p class="m" style="margin-top:22px">Через внешний API 100 000 чатов в месяц стоили бы $2 200–4 400. Локально — только электричество.</p>
+</section>
+
+<section class="s">
+  <h2>Результаты на DEV (65 диалогов)</h2>
+  <table>
+    <tr><th>Метрика</th><th>Значение</th></tr>
+    <tr><td>Оценено без ошибок формата</td><td class="acc">65 / 65</td></tr>
+    <tr><td>Найдены все подставные грубые нарушения (RU, KZ, EN)</td><td class="acc">6 / 6</td></tr>
+    <tr><td>Совпадение с независимой разметкой по критериям</td><td class="acc">91%</td></tr>
+    <tr><td>Средний балл RU / KZ / EN</td><td>85 / 89 / 86 — казахский не проседает</td></tr>
+    <tr><td>Контрольный набор (10 чатов): получение → оценка → push</td><td class="acc">13 минут</td></tr>
+  </table>
+</section>
+
+<section class="s">
+  <h2>Демо</h2>
+  <ul>
+    <li>Диалог и его оценка: баллы, объяснение, клик → реплика</li>
+    <li>Пример N/A и как перераспределился вес</li>
+    <li>Апелляция оператора → решение проверяющего → новый итог</li>
+    <li>Меняем критерий в чек-листе → новая версия → оценка заново</li>
+  </ul>
+</section>
+
+<section class="s">
+  <h2>Архитектура</h2>
+  <ul>
+    <li><b>Интерфейс:</b> HTML/CSS/JS без фреймворков, один компонент — переносится в Dynamics 365.</li>
+    <li><b>Сервер:</b> Python, JSON API, журнал действий. Хранение — файлы, легко заменить на БД.</li>
+    <li><b>Модель:</b> только классифицирует и указывает реплики; баллы, веса, N/A и округление — детерминированный код с тестами.</li>
+    <li><b>Строгий формат ответа</b> модели с валидацией и повтором при ошибке — 0 сбоев на 75 диалогах.</li>
+  </ul>
+</section>
+
+<section class="s">
+  <h2>Что дальше</h2>
+  <ul>
+    <li>Калибровка шкал на разметке экспертов банка (модель сейчас мягче человека на 1 ступень).</li>
+    <li>Анализ аудио: дикция и интонация в звонках.</li>
+    <li>Разбивка по операторам и командам, когда появится ID оператора из CRM.</li>
+    <li>GPU-сервер вместо ноутбука: окупается против API за 1–2 месяца.</li>
+  </ul>
+  <p style="margin-top:30px;font-size:30px">github.com/Dxpeare/cqa-hackathon</p>
+</section>
+
+<div class="k" id="k"></div>
+<script>
+const s=[...document.querySelectorAll('.s')];let i=0;const k=document.getElementById('k');
+function show(n){i=(n+s.length)%s.length;s.forEach((e,j)=>e.classList.toggle('on',j===i));k.textContent=(i+1)+' / '+s.length}
+addEventListener('keydown',e=>{if(['ArrowRight',' ','PageDown','Enter'].includes(e.key))show(i+1);if(['ArrowLeft','PageUp','Backspace'].includes(e.key))show(i-1)});
+addEventListener('click',()=>show(i+1));show(0);
+</script></body></html>
