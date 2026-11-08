@@ -445,76 +445,110 @@
     const lists = await api("/api/checklists"); state.checklists = lists;
     const id = args[0] || (lists[0] && lists[0].id);
     let cl = id ? JSON.parse(JSON.stringify(lists.find(c => c.id === id) || lists[0])) : null;
-    if (args[0] === "new") cl = { id: "", name: "Новый чек-лист", channel: "agent chat", description: "", rounding: 2, sections: [{ id: "main", title: "Основное" }], criteria: [] };
+    if (args[0] === "new") cl = { id: "", name: "", channel: "agent chat", description: "", rounding: 2, sections: [{ id: "main", title: "Основное" }], criteria: [] };
+    const open = new Set();   // indices of criteria expanded for editing
+    const slug = t => t.toLowerCase().replace(/[а-яё]/g, ch => ({ а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "h", ц: "c", ч: "ch", ш: "sh", щ: "sch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya" }[ch] || "")).replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 30) || "checklist";
     view.innerHTML = `<div class="row" style="margin-bottom:12px"><h2 style="margin:0">Чек-листы</h2>
-      <select id="cl-pick" style="width:260px">${lists.map(c => `<option value="${esc(c.id)}" ${cl && c.id === cl.id ? "selected" : ""}>${esc(c.name)} (v${c.version})</option>`).join("")}</select>
-      <button class="btn secondary sm" id="cl-new">+ Новый</button><button class="btn secondary sm" id="cl-copy">Копировать как новый</button><span class="grow"></span>
-      <button class="btn" id="cl-save">Сохранить как новую версию</button></div>
+      <select id="cl-pick" style="width:280px">${lists.map(c => `<option value="${esc(c.id)}" ${cl && c.id === cl.id ? "selected" : ""}>${esc(c.name)} (версия ${c.version})</option>`).join("")}${args[0] === "new" ? '<option selected>Новый чек-лист</option>' : ""}</select>
+      <button class="btn secondary sm" id="cl-new">+ Новый чек-лист</button><span class="grow"></span>
+      <span class="muted small" id="cl-vernote"></span>
+      <button class="btn" id="cl-save">Сохранить</button></div>
       <div class="panel" id="editor"></div>`;
     $("#cl-pick").addEventListener("change", e => go("/checklists/" + e.target.value));
     $("#cl-new").addEventListener("click", () => go("/checklists/new"));
-    $("#cl-copy").addEventListener("click", () => { cl.id = cl.id + "_copy"; cl.name += " (копия)"; delete cl.version; draw(); });
     $("#cl-save").addEventListener("click", async () => {
       collect();
-      try { const r = await api("/api/checklists", "POST", cl); toast("Сохранено: " + r.name + " v" + r.version + ". Чтобы применить: откройте диалог, выберите этот чек-лист и нажмите «Оценить заново»"); go("/checklists/" + r.id); if (location.hash === "#/checklists/" + r.id) render(); }
+      if (!cl.name) return toast("Введите название чек-листа", true);
+      if (!cl.id) cl.id = slug(cl.name);
+      try { const r = await api("/api/checklists", "POST", cl); toast("Сохранён «" + r.name + "», версия " + r.version + ". Чтобы применить: откройте диалог, выберите этот чек-лист и нажмите «Оценить заново»"); go("/checklists/" + r.id); if (location.hash === "#/checklists/" + r.id) render(); }
       catch (e) { toast(e.message, true); }
     });
-    if (!cl) { $("#editor").innerHTML = '<div class="empty">Нет чек-листов</div>'; return; }
+    if (!cl) { $("#editor").innerHTML = '<div class="empty">Чек-листов пока нет</div>'; return; }
     draw();
 
+    function answerKind(c) {
+      if (c.critical) return "флаг нарушения";
+      if (c.type === "scale") { const v = (c.scale || []).map(s => +s.value); return "шкала " + Math.min(...v) + "–" + Math.max(...v); }
+      return "да / нет";
+    }
     function draw() {
       const ed = $("#editor");
+      $("#cl-vernote").textContent = cl.version ? "Сейчас версия " + cl.version + ". Сохранение создаст версию " + (cl.version + 1) + ", старые оценки останутся со своей." : "Новый чек-лист";
+      const wsum = cl.criteria.filter(c => !c.critical).reduce((a, c) => a + (+c.weight || 0), 0);
       ed.innerHTML = `<div class="row">
-        <div class="field" style="width:160px"><label>ID (латиница)</label><input type="text" id="e-id" value="${esc(cl.id)}" ${cl.version ? "readonly" : ""}></div>
-        <div class="field grow"><label>Название</label><input type="text" id="e-name" value="${esc(cl.name)}"></div>
-        <div class="field" style="width:160px"><label>Для какого канала</label><select id="e-channel"><option value="agent chat" ${cl.channel === "agent chat" ? "selected" : ""}>Чат</option><option value="voice call" ${cl.channel === "voice call" ? "selected" : ""}>Звонок</option><option value="" ${!cl.channel ? "selected" : ""}>Любой</option></select></div>
-        <div class="field" style="width:120px"><label>Версия</label><input type="text" value="${cl.version ? "v" + cl.version + " → v" + (cl.version + 1) : "новый"}" readonly></div></div>
-        <div class="field" style="margin-top:8px"><label>Описание</label><input type="text" id="e-desc" value="${esc(cl.description || "")}"></div>
-        <h3>Секции чек-листа <span class="muted small">— группы критериев, через запятую в виде код:Название, например start:Начало, safety:Безопасность</span></h3>
-        <input type="text" id="e-sections" value="${esc((cl.sections || []).map(s => s.id + ":" + s.title).join(", "))}">
-        <h3>Критерии <span class="muted small">— вес: максимум баллов за критерий; сумма весов обычно 100. Каждое сохранение создаёт новую версию, старые оценки хранят свою.</span></h3>
-        <div id="e-crits">${cl.criteria.map((c, i) => critEditor(c, i)).join("")}</div>
-        <div class="row" style="margin-top:8px"><button class="btn secondary sm" id="add-crit">+ Добавить критерий</button><span class="muted small">Сумма весов: <b id="wsum">${cl.criteria.filter(c => !c.critical).reduce((a, c) => a + (+c.weight || 0), 0)}</b></span></div>`;
-      ed.querySelector("#add-crit").addEventListener("click", () => { collect(); cl.criteria.push({ id: "c" + String(cl.criteria.length + 1).padStart(2, "0"), section: (cl.sections[0] || {}).id || "", title: "", type: "binary", weight: 10, allow_na: false, description: "", na_condition: "", scale: [{ value: 10, label: "" }, { value: 0, label: "" }] }); draw(); });
+        <div class="field grow"><label>Название чек-листа</label><input type="text" id="e-name" value="${esc(cl.name)}" placeholder="Например: Чек-лист качества чатов"></div>
+        <div class="field" style="width:200px"><label>Применяется к</label><select id="e-channel"><option value="agent chat" ${cl.channel === "agent chat" ? "selected" : ""}>Чатам</option><option value="voice call" ${cl.channel === "voice call" ? "selected" : ""}>Звонкам</option><option value="" ${!cl.channel ? "selected" : ""}>Чатам и звонкам</option></select></div></div>
+        <table class="list cl-table" style="margin-top:14px"><thead><tr><th style="width:36px">№</th><th>Критерий</th><th style="width:130px">Ответ</th><th style="width:90px">Вес, баллов</th><th style="width:110px">Может быть N/A</th><th style="width:230px"></th></tr></thead>
+        <tbody>${cl.criteria.map((c, i) => `<tr class="cl-row ${open.has(i) ? "open" : ""}" data-i="${i}">
+            <td class="muted">${i + 1}</td>
+            <td><b>${esc(c.title || "(без названия)")}</b>${open.has(i) ? "" : `<div class="small muted">${esc(c.description || "")}</div>`}</td>
+            <td class="small">${answerKind(c)}</td>
+            <td>${c.critical ? '<span class="muted small">—</span>' : `<input type="number" class="inline-num" data-w="${i}" min="0" value="${c.weight}">`}</td>
+            <td>${c.critical ? "" : `<input type="checkbox" data-na="${i}" ${c.allow_na ? "checked" : ""}>`}</td>
+            <td style="text-align:right;white-space:nowrap"><button class="btn secondary sm" data-edit="${i}">${open.has(i) ? "Свернуть" : "Изменить"}</button> <button class="btn secondary sm" data-up="${i}" title="Выше">↑</button><button class="btn secondary sm" data-down="${i}" title="Ниже">↓</button> <button class="btn secondary sm" data-del="${i}" title="Удалить критерий">✕</button></td>
+          </tr>${open.has(i) ? `<tr class="cl-edit-row"><td></td><td colspan="5">${critEditor(c, i)}</td></tr>` : ""}`).join("")}
+        </tbody></table>
+        <div class="row" style="margin-top:10px"><button class="btn secondary sm" id="add-crit">+ Добавить критерий</button>
+          <span class="muted small">Сумма весов: <b id="wsum" class="${wsum === 100 ? "" : "warn-text"}">${wsum}</b>${wsum === 100 ? "" : " (обычно 100; итог всё равно приводится к 100)"}</span></div>
+        <details class="raw" style="margin-top:14px"><summary>Дополнительно: код чек-листа, описание, секции</summary>
+          <div class="row" style="margin-top:8px"><div class="field" style="width:220px"><label>Код (латиница, не меняется после создания)</label><input type="text" id="e-id" value="${esc(cl.id)}" ${cl.version ? "readonly" : ""} placeholder="заполнится из названия"></div>
+            <div class="field grow"><label>Описание</label><input type="text" id="e-desc" value="${esc(cl.description || "")}"></div></div>
+          <div class="field" style="margin-top:8px"><label>Секции — группы критериев для подытогов, через запятую в виде код:Название</label><input type="text" id="e-sections" value="${esc((cl.sections || []).map(s => s.id + ":" + s.title).join(", "))}"></div>
+          <div class="row" style="margin-top:8px"><button class="btn secondary sm" id="cl-copy">Скопировать как новый чек-лист</button></div></details>`;
+      ed.querySelector("#add-crit").addEventListener("click", () => { collect(); const n = cl.criteria.length + 1; cl.criteria.push({ id: "c" + String(n).padStart(2, "0"), code: "c" + String(n).padStart(2, "0"), section: (cl.sections[0] || {}).id || "", title: "", type: "binary", weight: 10, allow_na: false, description: "", na_condition: "", scale: [{ value: 10, label: "" }, { value: 0, label: "" }] }); open.add(cl.criteria.length - 1); draw(); setTimeout(() => { const t = ed.querySelector('.crit-edit [data-f="title"]'); if (t) t.focus(); }, 0); });
+      ed.querySelector("#cl-copy").addEventListener("click", () => { collect(); cl.id = ""; cl.name += " (копия)"; delete cl.version; draw(); toast("Введите название и нажмите «Сохранить»"); });
       ed.onclick = e => {
-        const t = e.target;
-        if (t.dataset.del != null) { collect(); cl.criteria.splice(+t.dataset.del, 1); draw(); }
-        if (t.dataset.up != null) { collect(); const i = +t.dataset.up; if (i > 0) { [cl.criteria[i - 1], cl.criteria[i]] = [cl.criteria[i], cl.criteria[i - 1]]; draw(); } }
-        if (t.dataset.down != null) { collect(); const i = +t.dataset.down; if (i < cl.criteria.length - 1) { [cl.criteria[i + 1], cl.criteria[i]] = [cl.criteria[i], cl.criteria[i + 1]]; draw(); } }
-        if (t.dataset.addStep != null) { collect(); (cl.criteria[+t.dataset.addStep].scale = cl.criteria[+t.dataset.addStep].scale || []).push({ value: 0, label: "" }); draw(); }
-        if (t.dataset.delStep != null) { collect(); const [i, j] = t.dataset.delStep.split("-").map(Number); cl.criteria[i].scale.splice(j, 1); draw(); }
+        const t = e.target.closest("button"); if (!t) return;
+        const d = t.dataset;
+        if (d.edit != null) { collect(); const i = +d.edit; open.has(i) ? open.delete(i) : open.add(i); draw(); }
+        if (d.del != null) { if (!confirm("Удалить критерий «" + (cl.criteria[+d.del].title || "без названия") + "»?")) return; collect(); cl.criteria.splice(+d.del, 1); open.clear(); draw(); }
+        if (d.up != null) { collect(); const i = +d.up; if (i > 0) { [cl.criteria[i - 1], cl.criteria[i]] = [cl.criteria[i], cl.criteria[i - 1]]; open.clear(); draw(); } }
+        if (d.down != null) { collect(); const i = +d.down; if (i < cl.criteria.length - 1) { [cl.criteria[i + 1], cl.criteria[i]] = [cl.criteria[i], cl.criteria[i + 1]]; open.clear(); draw(); } }
+        if (d.addStep != null) { collect(); (cl.criteria[+d.addStep].scale = cl.criteria[+d.addStep].scale || []).push({ value: 0, label: "" }); draw(); }
+        if (d.delStep != null) { collect(); const [i, j] = d.delStep.split("-").map(Number); cl.criteria[i].scale.splice(j, 1); draw(); }
       };
-      ed.onchange = e => { if (e.target.dataset.type != null) { collect(); draw(); } if (e.target.dataset.weight != null) collect(); };
+      ed.onchange = e => { collect(); if (e.target.dataset.type != null || e.target.dataset.f === "allow_na" || e.target.dataset.f === "critical" || e.target.dataset.na != null) draw(); else { const w = $("#wsum"); if (w) w.textContent = cl.criteria.filter(c => !c.critical).reduce((a, c) => a + (+c.weight || 0), 0); } };
     }
     function critEditor(c, i) {
       return `<div class="crit-edit" data-i="${i}">
-        <div class="grid">
-          <div class="field"><label>ID</label><input type="text" data-f="id" value="${esc(c.id)}"></div>
-          <div class="field"><label>Название</label><input type="text" data-f="title" value="${esc(c.title)}"></div>
-          <div class="field"><label>Тип</label><select data-f="type" data-type="1"><option value="binary" ${c.type === "binary" ? "selected" : ""}>Да / Нет</option><option value="scale" ${c.type === "scale" ? "selected" : ""}>Шкала</option></select></div>
-          <div class="field"><label>Вес</label><input type="number" data-f="weight" data-weight="1" min="0" value="${c.weight}"></div>
-          <div class="field"><label>Секция</label><select data-f="section">${(cl.sections || []).map(s => `<option value="${esc(s.id)}" ${c.section === s.id ? "selected" : ""}>${esc(s.title)}</option>`).join("")}</select></div>
-          <div class="field"><label>&nbsp;</label><label class="small" title="Можно ли ответить «не применимо»"><input type="checkbox" data-f="allow_na" ${c.allow_na ? "checked" : ""}> может быть N/A</label><label class="small" title="Грубая ошибка: без баллов, ставит флаг ⚠"><input type="checkbox" data-f="critical" ${c.critical ? "checked" : ""}> грубая ошибка</label></div>
+        <div class="row">
+          <div class="field grow"><label>Название критерия</label><input type="text" data-f="title" value="${esc(c.title)}" placeholder="Например: Установление контакта"></div>
+          <div class="field" style="width:150px"><label>Тип ответа</label><select data-f="type" data-type="1"><option value="binary" ${c.type === "binary" ? "selected" : ""}>Да / Нет</option><option value="scale" ${c.type === "scale" ? "selected" : ""}>Шкала баллов</option></select></div>
+          <div class="field" style="width:170px"><label>Секция</label><select data-f="section">${(cl.sections || []).map(s => `<option value="${esc(s.id)}" ${c.section === s.id ? "selected" : ""}>${esc(s.title)}</option>`).join("")}</select></div>
         </div>
-        <div class="field" style="margin-top:6px"><label>Правило: что значит «Да» или как ставить балл</label><textarea data-f="description" style="min-height:44px">${esc(c.description || "")}</textarea></div>
-        <div class="field" style="margin-top:6px"><label>Когда критерий неприменим (условие N/A)</label><input type="text" data-f="na_condition" value="${esc(c.na_condition || "")}" ${c.allow_na ? "" : "disabled"}></div>
-        ${c.type === "scale" ? `<div style="margin-top:6px"><label class="small muted">Ступени шкалы (верхняя даёт полный вес)</label>${(c.scale || []).map((s, j) => `<div class="scale-row"><input type="number" data-s="${j}" data-sv="1" value="${s.value}"><input type="text" data-s="${j}" data-sl="1" value="${esc(s.label)}" placeholder="описание ступени"><button class="btn secondary sm" data-del-step="${i}-${j}">×</button></div>`).join("")}
+        <div class="field" style="margin-top:8px"><label>Правило для модели: что значит «Да» или как ставить балл</label><textarea data-f="description" style="min-height:52px">${esc(c.description || "")}</textarea></div>
+        <div class="row" style="margin-top:8px">
+          <label class="small"><input type="checkbox" data-f="allow_na" ${c.allow_na ? "checked" : ""}> Может быть «не применимо» (N/A)</label>
+          <label class="small" title="Такой критерий не даёт баллов: при «Да» ставится флаг грубого нарушения"><input type="checkbox" data-f="critical" ${c.critical ? "checked" : ""}> Это грубое нарушение (флаг, без баллов)</label></div>
+        ${c.allow_na ? `<div class="field" style="margin-top:8px"><label>Когда критерий не применим</label><input type="text" data-f="na_condition" value="${esc(c.na_condition || "")}" placeholder="Например: клиент сразу изложил запрос полностью"></div>` : `<input type="hidden" data-f="na_condition" value="${esc(c.na_condition || "")}">`}
+        ${c.type === "scale" ? `<div style="margin-top:8px"><label class="small muted">Ступени шкалы — балл и что он означает (верхняя ступень даёт полный вес)</label>${(c.scale || []).map((s, j) => `<div class="scale-row"><input type="number" data-s="${j}" data-sv="1" value="${s.value}"><input type="text" data-s="${j}" data-sl="1" value="${esc(s.label)}" placeholder="что означает этот балл"><button class="btn secondary sm" data-del-step="${i}-${j}">×</button></div>`).join("")}
           <button class="btn secondary sm" data-add-step="${i}" style="margin-top:4px">+ ступень</button></div>` : ""}
-        <div class="tools"><button class="btn secondary sm" data-up="${i}">↑</button><button class="btn secondary sm" data-down="${i}">↓</button><button class="btn danger sm" data-del="${i}">Удалить</button></div>
+        <input type="hidden" data-f="id" value="${esc(c.id)}">
       </div>`;
     }
     function collect() {
-      cl.id = $("#e-id").value.trim(); cl.name = $("#e-name").value.trim(); cl.channel = $("#e-channel").value; cl.description = $("#e-desc").value.trim();
-      cl.sections = $("#e-sections").value.split(",").map(s => s.trim()).filter(Boolean).map(s => { const [id, ...t] = s.split(":"); return { id: id.trim(), title: (t.join(":") || id).trim() }; });
-      cl.criteria = [...view.querySelectorAll(".crit-edit")].map(el => {
-        const g = f => el.querySelector(`[data-f="${f}"]`);
-        const c = { id: g("id").value.trim(), title: g("title").value.trim(), type: g("type").value, weight: +g("weight").value || 0, section: g("section").value,
-          allow_na: g("allow_na").checked, critical: g("critical").checked, description: g("description").value.trim(), na_condition: g("na_condition").value.trim() };
-        if (c.type === "scale") c.scale = [...el.querySelectorAll("[data-sv]")].map((v, j) => ({ value: +v.value, label: el.querySelector(`[data-sl][data-s="${j}"]`).value.trim() }));
-        if (c.critical) c.weight = 0;
-        return c;
+      const v = sel => { const el = $(sel); return el ? el.value.trim() : null; };
+      if (v("#e-name") != null) cl.name = v("#e-name");
+      if ($("#e-channel")) cl.channel = $("#e-channel").value;
+      if (v("#e-id") != null) cl.id = v("#e-id");
+      if (v("#e-desc") != null) cl.description = v("#e-desc");
+      if (v("#e-sections") != null) cl.sections = v("#e-sections").split(",").map(s => s.trim()).filter(Boolean).map(s => { const [id, ...t] = s.split(":"); return { id: id.trim(), title: (t.join(":") || id).trim() }; });
+      cl.criteria = cl.criteria.map((c, i) => {
+        const out = Object.assign({}, c);                       // keep code & any other fields
+        const w = view.querySelector(`[data-w="${i}"]`); if (w) out.weight = +w.value || 0;
+        const na = view.querySelector(`[data-na="${i}"]`); if (na) out.allow_na = na.checked;
+        const el = view.querySelector(`.crit-edit[data-i="${i}"]`);
+        if (el) {
+          const g = f => el.querySelector(`[data-f="${f}"]`);
+          out.title = g("title").value.trim(); out.type = g("type").value; out.section = g("section").value;
+          out.allow_na = g("allow_na").checked; out.critical = g("critical").checked;
+          out.description = g("description").value.trim(); out.na_condition = g("na_condition").value.trim();
+          if (out.type === "scale") out.scale = [...el.querySelectorAll("[data-sv]")].map((x, j) => ({ value: +x.value, label: el.querySelector(`[data-sl][data-s="${j}"]`).value.trim() }));
+          else delete out.scale;
+        }
+        if (out.critical) out.weight = 0;
+        return out;
       });
-      const w = $("#wsum"); if (w) w.textContent = cl.criteria.filter(c => !c.critical).reduce((a, c) => a + c.weight, 0);
     }
   }
 
