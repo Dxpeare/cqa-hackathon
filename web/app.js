@@ -24,7 +24,8 @@
   function scoreClass(v) { return v == null ? "" : v >= 80 ? "good" : v >= 50 ? "mid" : "bad"; }
   function answerLabel(c, a) {
     if (a == null) return "—";
-    if (a === "na") return "N/A";
+    if (c && c.critical) return a === "yes" ? "Есть нарушение" : a === "no" ? "Нет нарушений" : "Не применимо";
+    if (a === "na") return "Не применимо";
     if (a === "yes") return "Да";
     if (a === "no") return "Нет";
     return a;
@@ -35,10 +36,21 @@
     if (c.type === "scale") { const top = Math.max(...c.scale.map(s => +s.value)); return +a >= top ? "yes" : +a > 0 ? "" : "no"; }
     return a;
   }
+  const GROUP_NAMES = { DEV: "Учебный набор", FBROKER: "Контрольный набор", SWAP: "Дополнительный набор", UPLOADED: "Загруженные вручную" };
+  function groupName(g) { return GROUP_NAMES[g] || g; }
+  const PRETTY_MODELS = { "gemma4:31b": "Gemma 4 (31B)", "qwen3.6:35b": "Qwen 3.6 (35B)" };
+  function prettyModel(m) { return PRETTY_MODELS[m] || m || "—"; }
+  function modelName(m) {
+    if (!m) return "модель";
+    if (m === "mock") return "демо-эвристика (не ИИ)";
+    if (m.startsWith("ollama:")) return "локальная модель " + prettyModel(m.slice(7));
+    if (m.startsWith("gemini:")) return "Gemini " + m.slice(7);
+    return "Claude " + m;
+  }
   function roleName(r) { return { operator: "Оператор", client: "Клиент", bot: "Бот", system: "Система" }[r] || r; }
   function modelLabel(s) {
     const ext = s.hybrid_external === "gemini" ? s.gemini_model : s.anthropic_model;
-    return { mock: "Демо без ИИ: оценки ненастоящие", ollama: "Локальная · " + s.ollama_model, gemini: "Gemini · " + s.gemini_model,
+    return { mock: "Демо без ИИ: оценки ненастоящие", ollama: "Оценивает ИИ: " + prettyModel(s.ollama_model) + " · локально", gemini: "Gemini · " + s.gemini_model,
       anthropic: "Claude · " + s.anthropic_model, hybrid: "Гибрид · " + s.ollama_model + " + " + ext }[s.provider] || s.provider;
   }
   function setRole(role) {
@@ -100,24 +112,34 @@
           <div class="kpi"><b>${evd.reduce((a, c) => a + c.evaluation.open_appeals, 0)}</b><span>открытых апелляций</span></div>
         </div>
       </section>
+      <div class="howto">
+        <div><b>1</b><span><strong>Диалоги</strong> попадают в систему из CRM, файла или API.</span></div>
+        <div><b>2</b><span><strong>Модель оценивает оператора</strong> по чек-листу: по каждому критерию — ответ, баллы, объяснение и реплика-доказательство.</span></div>
+        <div><b>3</b><span><strong>Оператор может оспорить</strong> критерий, <strong>проверяющий</strong> подтверждает или меняет оценку — итог пересчитывается. Роль переключается справа вверху.</span></div>
+      </div>
       <div class="panel" style="margin-bottom:16px">
         <div class="row">
-          <select id="f-group" style="width:140px"><option value="">Все наборы</option>${groups.map(g => `<option ${filt.group === g ? "selected" : ""}>${esc(g)}</option>`).join("")}</select>
+          <select id="f-group" style="width:200px"><option value="">Все наборы</option>${groups.map(g => `<option value="${esc(g)}" ${filt.group === g ? "selected" : ""}>${esc(groupName(g))}</option>`).join("")}</select>
           <select id="f-lang" style="width:110px"><option value="">Язык</option>${["RU", "KZ", "EN"].map(l => `<option ${filt.lang === l ? "selected" : ""}>${l}</option>`).join("")}</select>
           <select id="f-channel" style="width:140px"><option value="">Канал</option><option value="agent chat" ${filt.channel === "agent chat" ? "selected" : ""}>Чат</option><option value="voice call" ${filt.channel === "voice call" ? "selected" : ""}>Звонок</option></select>
           <select id="f-attn" style="width:200px"><option value="">Все оценки</option>${Object.entries(ATTN).map(([k, v]) => `<option value="${k}" ${filt.attn === k ? "selected" : ""}>${v}</option>`).join("")}</select>
-          <input id="f-q" type="text" placeholder="Поиск по ID" value="${esc(filt.q)}" style="width:160px">
+          <input id="f-q" type="text" placeholder="Поиск по ID диалога" value="${esc(filt.q)}" style="width:170px">
           <span class="break"></span>
-          <button class="btn secondary sm" id="btn-upload">Загрузить JSON</button>
-          <input id="file-upload" type="file" accept=".json,application/json" hidden>
-          <button class="btn secondary sm" id="btn-fetch">Скачать из API…</button>
-          <select id="batch-checklist" style="width:200px"><option value="">Чек-лист по каналу</option>${checklists.map(c => `<option value="${esc(c.id)}">${esc(c.name)} (v${c.version})</option>`).join("")}</select>
-          <button class="btn sm" id="btn-batch" ${running ? "disabled" : ""}>Оценить все неоценённые</button>
-          <button class="btn secondary sm" id="btn-export">Выгрузить results.json</button>
-          <span class="grow"></span>
-          <button class="btn secondary sm" id="btn-reeval" ${running ? "disabled" : ""}>Переоценить все</button>
-          <button class="btn danger sm" id="btn-clear">Удалить оценки набора</button>
+          <span class="grp"><span class="grp-l">Данные</span>
+            <button class="btn secondary sm" id="btn-upload" title="Загрузить файл JSON с диалогами (формат API организаторов)">Загрузить диалоги</button>
+            <input id="file-upload" type="file" accept=".json,application/json" hidden>
+            <button class="btn secondary sm" id="btn-fetch" title="Скачать набор диалогов из API организаторов по его group_id">Скачать набор…</button></span>
+          <span class="grp"><span class="grp-l">Оценка</span>
+            <select id="batch-checklist" style="width:210px" title="Какой чек-лист применить ко всем диалогам набора"><option value="">Чек-лист: по типу диалога</option>${checklists.map(c => `<option value="${esc(c.id)}">${esc(c.name)} (v${c.version})</option>`).join("")}</select>
+            <button class="btn sm" id="btn-batch" ${running ? "disabled" : ""} title="Запустить модель по всем диалогам выбранного набора, у которых ещё нет оценки">Оценить неоценённые</button></span>
+          <span class="grp"><span class="grp-l">Результаты</span>
+            <button class="btn secondary sm" id="btn-export" title="Сохранить оценки набора в results/…/results.json в формате организаторов">Выгрузить results.json</button></span>
         </div>
+        <details class="raw" style="margin-top:8px"><summary>Дополнительно: переоценка и удаление</summary>
+          <div class="row" style="margin-top:8px">
+            <button class="btn secondary sm" id="btn-reeval" ${running ? "disabled" : ""}>Переоценить все диалоги набора заново</button>
+            <button class="btn danger sm" id="btn-clear">Удалить все оценки набора</button>
+          </div></details>
         <div id="job" style="margin-top:10px" ${running ? "" : "hidden"}></div>
       </div>
       <div class="panel" style="padding:0"><table class="list"><thead><tr>
@@ -136,13 +158,13 @@
         const e = c.evaluation;
         const st = !e ? '<span class="muted small">не оценён</span>' : (e.open_appeals ? `<span class="tag warn">апелляция (${e.open_appeals})</span>` : e.has_changes ? '<span class="tag">пересмотрено</span>' : '<span class="tag ok">оценён</span>');
         return `<tr class="clickable" data-id="${esc(c.conversation_id)}">
-          <td><b>${esc(c.conversation_id)}</b></td><td>${esc(c.group_id)}</td>
+          <td><b>${esc(c.conversation_id)}</b></td><td class="small">${esc(groupName(c.group_id))}</td>
           <td>${c.channel === "voice call" ? '<span class="tag voice">звонок</span>' : '<span class="tag">чат</span>'}${c.has_audio ? '<span class="tag voice">аудио</span>' : ""}</td>
           <td><span class="tag lang">${esc(c.language)}</span></td><td>${c.messages}</td>
           <td class="small">${e ? esc(e.checklist) : ""}</td>
           <td class="score ${e ? scoreClass(e.total) : ""}">${e ? fmtScore(e.total) : ""}${e && e.critical_error ? ' <span class="flag" title="грубая ошибка">⚠</span>' : ""}</td>
           <td>${st}</td><td><button class="btn sm ${e ? "secondary" : ""}" data-open="${esc(c.conversation_id)}">${e ? "Открыть" : "Оценить"}</button></td></tr>`;
-      }).join("") || '<tr><td colspan="9" class="empty">Нет диалогов. Загрузите JSON или скачайте набор из API.</td></tr>';
+      }).join("") || '<tr><td colspan="9" class="empty">Нет диалогов. Нажмите «Загрузить диалоги» или «Скачать набор…».</td></tr>';
     }
     apply();
     ["#f-group", "#f-lang", "#f-channel", "#f-attn"].forEach(s => $(s).addEventListener("change", apply));
@@ -159,7 +181,7 @@
       catch (err) { toast(err.message, true); }
     });
     $("#btn-fetch").addEventListener("click", async () => {
-      const g = prompt("group_id набора (DEV или значение для контрольного набора):", "DEV"); if (!g) return;
+      const g = prompt("group_id набора из письма организаторов (например DEV, FBroker, SWAP):", "DEV"); if (!g) return;
       try { const r = await api("/api/datasets/fetch", "POST", { group_id: g }); toast("Скачано " + r.count + " диалогов (" + r.group_id + ")"); render(); }
       catch (err) { toast(err.message, true); }
     });
@@ -171,13 +193,13 @@
     $("#btn-reeval").addEventListener("click", async () => {
       const g = $("#f-group").value || groups[0]; if (!g) return toast("нет набора", true);
       const n = convs.filter(c => c.group_id === g).length;
-      if (!confirm(`Заново оценить все ${n} диалогов набора ${g} текущей моделью (${modelLabel(state.settings)})? Старые оценки останутся в истории карточек.`)) return;
+      if (!confirm(`Заново оценить все ${n} диалогов набора «${groupName(g)}»? Старые оценки останутся в истории карточек.`)) return;
       try { await api("/api/evaluate/batch", "POST", { group_id: g, checklist_id: $("#batch-checklist").value || null, force: true }); pollJob(); }
       catch (err) { toast(err.message, true); }
     });
     $("#btn-clear").addEventListener("click", async () => {
       const g = $("#f-group").value || groups[0]; if (!g) return toast("нет набора", true);
-      if (!confirm(`Удалить ВСЕ оценки и апелляции набора ${g}? Это нельзя отменить. Действие попадёт в журнал.`)) return;
+      if (!confirm(`Удалить ВСЕ оценки и апелляции набора «${groupName(g)}»? Это нельзя отменить. Действие попадёт в журнал.`)) return;
       try { const r = await api("/api/evaluations/delete", "POST", { group_id: g }); toast("Удалено оценок: " + r.removed); render(); }
       catch (err) { toast(err.message, true); }
     });
@@ -194,7 +216,7 @@
         const js = await api("/api/jobs"); const j = js[0]; const box = $("#job"); if (!box) return clearInterval(state.jobTimer);
         if (!j) return;
         const done = j.done + j.failed; box.hidden = false;
-        box.innerHTML = `<div class="row small"><span>${j.status === "running" ? '<span class="spinner"></span>' : "✔"} ${esc(j.group_id)}: ${done} / ${j.total} (ошибок ${j.failed}, пропущено ${j.skipped}) · $${(j.cost_usd || 0).toFixed(3)}</span></div>
+        box.innerHTML = `<div class="row small"><span>${j.status === "running" ? '<span class="spinner"></span>' : "✔"} ${esc(j.group_id)}: ${done} / ${j.total} (ошибок ${j.failed}, уже были оценены ${j.skipped})</span></div>
           <div class="progress"><div style="width:${j.total ? Math.round(done / j.total * 100) : 100}%"></div></div>
           ${j.errors.slice(0, 5).map(e => `<div class="small" style="color:#d64545">${esc(e.conversation_id)}: ${esc(e.error)}</div>`).join("")}`;
         if (j.status !== "running") { clearInterval(state.jobTimer); render(); }
@@ -218,10 +240,11 @@
       <div class="row" style="margin-bottom:12px">
         <button class="btn secondary sm" id="back">← К списку</button>
         <h2 style="margin:0">${esc(conv.conversation_id)}</h2>
-        <span class="tag">${conv.channel === "voice call" ? "звонок" : "чат"}</span><span class="tag lang">${esc(conv.language)}</span><span class="tag">${esc(conv.group_id)}</span>
+        <span class="tag">${conv.channel === "voice call" ? "звонок" : "чат"}</span><span class="tag lang">${esc(conv.language)}</span><span class="tag">${esc(groupName(conv.group_id))}</span>
         <span class="grow"></span>
-        <select id="cl-select" style="width:230px">${state.checklists.map(c => `<option value="${esc(c.id)}" ${c.id === defaultCl ? "selected" : ""}>${esc(c.name)} (v${c.version})</option>`).join("")}</select>
-        <button class="btn" id="btn-eval">${ev ? "Оценить заново" : "Запустить оценку"}</button>
+        <span class="muted small">Оценивать по чек-листу:</span>
+        <select id="cl-select" style="width:230px" title="Какой чек-лист и какая его версия будут использованы при следующей оценке">${state.checklists.map(c => `<option value="${esc(c.id)}" ${c.id === defaultCl ? "selected" : ""}>${esc(c.name)} (v${c.version})</option>`).join("")}</select>
+        <button class="btn ${ev ? "secondary" : ""}" id="btn-eval" title="${ev ? "Создаст новую оценку по выбранному чек-листу, прежняя останется в истории" : "Модель прочитает диалог и оценит оператора по каждому критерию"}">${ev ? "Оценить заново" : "Запустить оценку"}</button>
       </div>
       <div class="card">
         <div class="panel" id="left"></div>
@@ -269,20 +292,22 @@
 
   function renderResult(conv, ev) {
     const right = $("#right");
-    if (!ev) { right.innerHTML = '<div class="empty">Оценки ещё нет. Выберите чек-лист и нажмите «Запустить оценку».</div>'; return; }
+    if (!ev) { right.innerHTML = '<div class="empty">Оценки ещё нет. Нажмите «Запустить оценку» — модель прочитает диалог и оценит оператора по каждому критерию чек-листа (30–90 секунд).</div>'; return; }
     const cl = ev.checklist; const fs = ev.final_score || ev.score;
     const changed = ev.has_changes;
     const critById = Object.fromEntries(cl.criteria.map(c => [c.id, c]));
-    const history = conv.evaluations.length > 1 ? `<select id="ev-hist" class="small" style="width:auto">${conv.evaluations.map(e => `<option value="${e.id}" ${e.id === ev.id ? "selected" : ""}>${esc(e.created_at.slice(0, 16).replace("T", " "))} · ${esc(e.checklist)} v${e.checklist_version} · ${fmtScore(e.total)}</option>`).join("")}</select>` : "";
+    const history = conv.evaluations.length > 1 ? `<span class="muted small">История оценок:</span><select id="ev-hist" class="small" style="width:auto">${conv.evaluations.map(e => `<option value="${e.id}" ${e.id === ev.id ? "selected" : ""}>${esc(e.created_at.slice(0, 16).replace("T", " "))} · ${esc(e.checklist)} v${e.checklist_version} · ${fmtScore(e.total)}</option>`).join("")}</select>` : "";
     right.innerHTML = `
-      <div class="row"><h3 style="margin:0">Результат</h3><span class="muted small">${esc(cl.name)} v${cl.version} · ${esc(ev.model || "")} · $${(ev.cost_usd || 0).toFixed(3)} · ${ev.duration_sec || 0} с</span><span class="grow"></span>${history}
-        <button class="btn danger sm" id="ev-delete">Удалить оценку</button></div>
+      <div class="row"><h3 style="margin:0">Результат оценки</h3><span class="muted small">${esc(cl.name)} v${cl.version} · ${esc(modelName(ev.model))}, ${ev.duration_sec || 0} с</span><span class="grow"></span>${history}</div>
       <div class="total" style="margin:10px 0">
         <span class="big score ${scoreClass(fs.total)}">${fmtScore(fs.total)}</span><span class="muted">из ${fs.max_total == null ? "—" : fs.max_total}</span>
-        ${changed ? `<span class="strike" title="исходная оценка">${fmtScore(ev.score.total)}</span><span class="tag">финальный после пересмотра</span>` : ""}
+        ${changed ? `<span class="strike" title="исходная оценка">${fmtScore(ev.score.total)}</span><span class="tag">итог после апелляции</span>` : ""}
         ${fs.critical_error ? '<span class="flag">⚠ грубая ошибка</span>' : '<span class="muted small">грубых ошибок нет</span>'}
         ${fs.total == null ? '<span class="muted small">итог не рассчитывается: нет применимых критериев</span>' : ""}
       </div>
+      <p class="hint">Итог — сумма баллов по критериям с учётом их веса, максимум 100.${(fs.criteria || []).some(x => x.status === "na") ? " " + (fs.criteria || []).filter(x => x.status === "na").length + " критерий(я) не применимы к этому диалогу: баллы за них не начисляются, их вес распределён между остальными." : ""} Грубая ошибка отмечается отдельным флагом и итог не обнуляет.<br>${state.role === "operator"
+        ? "Не согласны с ответом по критерию? Нажмите «Оспорить оценку» под ним и напишите, почему. Проверяющий рассмотрит апелляцию, и итог пересчитается."
+        : "Открытые апелляции отмечены оранжевым. Выберите «Подтвердить» или «Изменить на…», укажите причину и нажмите «Сохранить» — итог пересчитается."}</p>
       <div class="sections">${(fs.sections || []).map(s => `<div><b>${esc(s.title)}</b>: ${fmtScore(s.points)} / ${fmtScore(s.max_points)}</div>`).join("")}</div>
       ${ev.summary ? `<p class="small muted">${esc(ev.summary)}</p>` : ""}
       ${ev.validation_errors && ev.validation_errors.length ? `<p class="small" style="color:#d64545">Проблемы ответа модели: ${esc(ev.validation_errors.join("; "))}</p>` : ""}
@@ -294,23 +319,23 @@
         const ans = finalAns != null ? finalAns : r.answer;
         return `<div class="crit" data-cid="${esc(c.id)}">
           <div class="head"><span class="ans ${answerClass(c, ans)}">${answerLabel(c, ans)}</span>
-            <div><b>${esc(c.title)}</b> <span class="muted small">· вес ${c.weight}${c.critical ? " · без баллов" : ""}${c.type === "scale" ? " · шкала 0–" + Math.max(...c.scale.map(s => +s.value)) : ""}${r.confidence != null ? " · уверенность " + Math.round(r.confidence * 100) + "%" : ""}</span></div>
-            <span class="pts">${c.critical ? (ans === "yes" ? '<span class="flag">нарушение</span>' : "—") : frow.points == null ? '<span class="muted">N/A</span>' : `<b>${fmtScore(frow.points)}</b> / ${fmtScore(frow.max_points)}`}</span></div>
+            <div><b>${esc(c.title)}</b> <span class="muted small">${c.critical ? "· отдельный флаг, без баллов" : "· вес " + c.weight + " б." + (frow.max_points != null && Math.abs(frow.max_points - c.weight) > 0.005 ? " → " + fmtScore(frow.max_points) + " после перераспределения N/A" : "")}${c.type === "scale" ? " · шкала 0–" + Math.max(...c.scale.map(s => +s.value)) : ""}${r.confidence != null ? ` · <span title="Насколько модель уверена в ответе по этому критерию. Ниже 60% — стоит проверить вручную"${r.confidence < 0.6 ? ' class="warn-text"' : ""}>модель уверена на ${Math.round(r.confidence * 100)}%</span>` : ""}</span></div>
+            <span class="pts">${c.critical ? (ans === "yes" ? '<span class="flag">⚠ нарушение</span>' : '<span class="muted small">нет</span>') : frow.points == null ? '<span class="muted small" title="Критерий неприменим к этому диалогу: баллы не начисляются, его вес распределён между остальными">не применимо</span>' : `<b>${fmtScore(frow.points)}</b> / ${fmtScore(frow.max_points)}`}</span></div>
           <div class="expl">${esc(r.explanation || "—")}</div>
-          <div class="evid">${(r.evidence_ids || []).map(i => `<button data-ev="${i}" title="${esc((conv.transcript[i] || {}).text || "")}">реплика #${i + 1} ${esc((conv.transcript[i] || {}).offset || "")}</button>`).join("")}
-            ${r.checked_range ? `<button data-range="${r.checked_range[0]}-${r.checked_range[1]}">проверен участок #${r.checked_range[0] + 1}–${r.checked_range[1] + 1}</button>` : ""}</div>
+          <div class="evid">${(r.evidence_ids || []).length || r.checked_range ? '<span class="muted small" style="margin-right:6px">Где в диалоге:</span>' : ""}${(r.evidence_ids || []).map(i => `<button data-ev="${i}" title="Показать реплику в транскрипте: ${esc(((conv.transcript[i] || {}).text || "").slice(0, 120))}">реплика #${i + 1} ${esc((conv.transcript[i] || {}).offset || "")}</button>`).join("")}
+            ${r.checked_range ? `<button data-range="${r.checked_range[0]}-${r.checked_range[1]}" title="Участок диалога, где ожидалось действие оператора">проверен участок #${r.checked_range[0] + 1}–${r.checked_range[1] + 1}</button>` : ""}</div>
           ${finalAns != null && finalAns !== r.answer ? `<div class="changed">Исходная оценка модели: <b>${answerLabel(c, r.answer)}</b> → после пересмотра: <b>${answerLabel(c, finalAns)}</b></div>` : ""}
           ${appeals.map(a => `<div class="appeal ${a.status}"><b>Апелляция</b> (${esc(a.author)}, ${esc(a.created_at.slice(0, 16).replace("T", " "))}): ${esc(a.comment)}
             ${a.decision ? `<div style="margin-top:4px"><b>Решение (${esc(a.decision.reviewer)}):</b> ${a.decision.action === "confirm" ? "оценка подтверждена" : "оценка изменена на <b>" + answerLabel(c, a.decision.new_answer) + "</b>"} — ${esc(a.decision.reason)}</div>` : '<div class="muted small">ожидает решения проверяющего</div>'}</div>`).join("")}
           <div class="appeal-box" id="ab-${esc(c.id)}">${appealControls(c, ans, open)}</div>
         </div>`;
       }).join("")}</div>
-      <details class="raw" style="margin-top:10px"><summary>JSON оценки</summary><pre class="json">${esc(JSON.stringify(ev, null, 1).slice(0, 20000))}</pre></details>`;
+      <div class="row" style="margin-top:10px"><details class="raw"><summary>Служебное: JSON оценки</summary><pre class="json">${esc(JSON.stringify(ev, null, 1).slice(0, 20000))}</pre></details><span class="grow"></span>${state.role === "reviewer" ? '<button class="btn secondary sm" id="ev-delete" title="Удалить эту оценку вместе с апелляциями">Удалить оценку</button>' : ""}</div>`;
 
     function appealControls(c, ans, open) {
       if (state.role === "operator") {
-        if (open) return "";
-        return `<button class="btn secondary sm" data-appeal="${esc(c.id)}">Оспорить</button>`;
+        if (open) return `<span class="muted small">Апелляция подана и ждёт решения. Чтобы вынести решение, переключите роль на «Проверяющий» справа вверху.</span>`;
+        return `<button class="btn secondary sm" data-appeal="${esc(c.id)}" title="Не согласны с оценкой по этому критерию? Напишите комментарий — проверяющий рассмотрит">Оспорить оценку</button>`;
       }
       if (!open) return "";
       const opts = (c.type === "scale" ? c.scale.map(s => String(s.value)) : ["yes", "no"]).concat(c.allow_na ? ["na"] : []).filter(v => v !== ans);
@@ -320,7 +345,7 @@
         <button class="btn sm" data-decide="${open.id}" data-crit="${esc(c.id)}">Сохранить</button></div>`;
     }
 
-    $("#ev-delete").addEventListener("click", async () => {
+    if ($("#ev-delete")) $("#ev-delete").addEventListener("click", async () => {
       if (!confirm("Удалить эту оценку вместе с апелляциями? Это нельзя отменить. Действие попадёт в журнал.")) return;
       try { await api("/api/evaluations/" + ev.id, "DELETE"); toast("Оценка удалена"); go("/card/" + encodeURIComponent(conv.conversation_id)); render(); }
       catch (err) { toast(err.message, true); }
@@ -332,14 +357,14 @@
       const ab = e.target.closest("[data-appeal]");
       if (ab) {
         const box = $("#ab-" + ab.dataset.appeal);
-        box.innerHTML = `<div class="field"><label>Комментарий к апелляции</label><textarea id="ap-text"></textarea></div>
+        box.innerHTML = `<div class="field"><label>Почему вы не согласны с оценкой по этому критерию?</label><textarea id="ap-text" placeholder="Например: клиент сам завершил чат, попрощаться было невозможно"></textarea></div>
           <div class="row" style="margin-top:6px"><button class="btn sm" data-send-appeal="${esc(ab.dataset.appeal)}">Отправить апелляцию</button><button class="btn secondary sm" data-cancel="1">Отмена</button></div>`;
         $("#ap-text").focus(); return;
       }
       if (e.target.closest("[data-cancel]")) return renderResult(conv, ev);
       const sb = e.target.closest("[data-send-appeal]");
       if (sb) {
-        try { const r = await api("/api/evaluations/" + ev.id + "/appeals", "POST", { criterion_id: sb.dataset.sendAppeal, comment: $("#ap-text").value }); toast("Апелляция сохранена"); state.ev = r; renderResult(conv, r); setStatus(); }
+        try { const r = await api("/api/evaluations/" + ev.id + "/appeals", "POST", { criterion_id: sb.dataset.sendAppeal, comment: $("#ap-text").value }); toast("Апелляция отправлена проверяющему"); state.ev = r; renderResult(conv, r); setStatus(); }
         catch (err) { toast(err.message, true); }
         return;
       }
@@ -355,15 +380,18 @@
 
   // ------------------------------------------------------------ appeals view
   async function renderAppeals() {
-    const list = await api("/api/appeals");
-    view.innerHTML = `<div class="panel" style="padding:0"><table class="list"><thead><tr><th>Статус</th><th>Диалог</th><th>Чек-лист</th><th>Критерий</th><th>Оспорена</th><th>Комментарий</th><th>Решение</th><th>Подана</th></tr></thead><tbody>
+    const [list, lists] = await Promise.all([api("/api/appeals"), api("/api/checklists")]);
+    const critTitle = id => { for (const cl of lists) { const c = cl.criteria.find(x => x.id === id); if (c) return c.title; } return id; };
+    view.innerHTML = `<div class="row" style="margin-bottom:12px"><h2 style="margin:0">Апелляции</h2>
+        <span class="muted small">Оператор оспаривает критерий → проверяющий подтверждает или меняет оценку с указанием причины → итог диалога пересчитывается. Нажмите на строку, чтобы открыть карточку в роли проверяющего.</span></div>
+      <div class="panel" style="padding:0"><table class="list"><thead><tr><th>Статус</th><th>Диалог</th><th>Чек-лист</th><th>Критерий</th><th>Ответ модели</th><th>Комментарий оператора</th><th>Решение проверяющего</th><th>Когда подана</th></tr></thead><tbody>
       ${list.map(a => `<tr class="clickable" data-go="/card/${encodeURIComponent(a.conversation_id)}/${a.evaluation_id}">
         <td>${a.status === "open" ? '<span class="tag warn">открыта</span>' : '<span class="tag">решена</span>'}</td>
-        <td><b>${esc(a.conversation_id)}</b></td><td class="small">${esc(a.checklist)}</td><td>${esc(a.criterion_id)}</td><td>${esc(answerLabel({}, a.disputed_answer))}</td>
+        <td><b>${esc(a.conversation_id)}</b></td><td class="small">${esc(a.checklist)}</td><td>${esc(critTitle(a.criterion_id))}</td><td>${esc(answerLabel({}, a.disputed_answer))}</td>
         <td class="small">${esc(a.comment)}</td><td class="small">${a.decision ? (a.decision.action === "confirm" ? "подтверждена" : "изменена → " + esc(answerLabel({}, a.decision.new_answer))) + ": " + esc(a.decision.reason) : "—"}</td>
-        <td class="small">${esc(a.created_at.slice(0, 16).replace("T", " "))}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">Апелляций нет</td></tr>'}
+        <td class="small">${esc(a.created_at.slice(0, 16).replace("T", " "))}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">Апелляций пока нет. Оператор подаёт их из карточки диалога кнопкой «Оспорить оценку».</td></tr>'}
     </tbody></table></div>`;
-    view.querySelectorAll("tr[data-go]").forEach(tr => tr.addEventListener("click", () => { setRole("reviewer"); go(tr.dataset.go); }));
+    view.querySelectorAll("tr[data-go]").forEach(tr => tr.addEventListener("click", () => { setRole("reviewer"); toast("Вы перешли в роль проверяющего"); go(tr.dataset.go); }));
   }
 
   // ------------------------------------------------------------ analytics
@@ -374,8 +402,8 @@
     const avgRows = list => list.map(x => bar(x.key, x.avg, 100, `${fmtScore(x.avg)} <span class="muted">· ${x.count}</span>`, `${x.key}: средний балл ${fmtScore(x.avg)}, оценок ${x.count}`)).join("") || '<div class="muted small">Нет данных</div>';
     const maxBin = Math.max(1, ...a.distribution.map(d => d.count));
     view.innerHTML = `<div class="row" style="margin-bottom:14px"><h2 style="margin:0">Аналитика</h2>
-        <span class="muted small">По последней оценке каждого диалога, с учётом апелляций</span><span class="grow"></span>
-        <select id="an-group" style="width:160px"><option value="">Все наборы</option>${groups.map(g => `<option ${state.agroup === g.group_id ? "selected" : ""}>${esc(g.group_id)}</option>`).join("")}</select></div>
+        <span class="muted small">Где операторы чаще всего теряют баллы и как распределены итоги. Считается по последней оценке каждого диалога с учётом апелляций.</span><span class="grow"></span>
+        <select id="an-group" style="width:200px"><option value="">Все наборы</option>${groups.map(g => `<option value="${esc(g.group_id)}" ${state.agroup === g.group_id ? "selected" : ""}>${esc(groupName(g.group_id))}</option>`).join("")}</select></div>
       <div class="kpis" style="margin-bottom:16px">
         <div class="kpi"><b>${a.count}</b><span>оценено диалогов</span></div>
         <div class="kpi accent"><b>${fmtScore(a.avg)}</b><span>средний балл</span></div>
@@ -384,18 +412,16 @@
         <div class="kpi"><b>${a.appeals_changed}</b><span>оценок изменено по апелляции</span></div>
       </div>
       ${a.count ? `<div class="an-grid">
-        <div class="panel"><h3 style="margin-top:0">Средний результат по критериям, % от максимума</h3>
+        <div class="panel"><h3 style="margin-top:0">Сколько операторы набирают по каждому критерию, % от максимума</h3>
           ${a.criteria.map(c => c.critical
             ? bar(c.title, null, 100, `нарушений: <b>${c.fails}</b> из ${c.scored}`, `${c.title}: нарушения в ${c.fails} из ${c.scored} диалогов`)
             : bar(c.title, c.avg_percent, 100, `${fmtScore(c.avg_percent)}% <span class="muted">· N/A ${c.na}</span>`, `${c.title}: ${fmtScore(c.avg_percent)}% в среднем, 0 баллов в ${c.fails} диалогах, N/A в ${c.na}`)).join("")}
-          <p class="small muted" style="margin:10px 0 0">Самые низкие строки показывают, чему в первую очередь учить операторов.</p></div>
-        <div class="panel"><h3 style="margin-top:0">Распределение итоговых баллов</h3>
+          <p class="small muted" style="margin:10px 0 0">Самые короткие полосы — то, чему в первую очередь учить операторов. Для «Грубых ошибок» показано число диалогов с нарушением.</p></div>
+        <div class="panel"><h3 style="margin-top:0">Сколько диалогов получили какой итог</h3>
           ${a.distribution.map(d => bar(d.key, d.count, maxBin, String(d.count), `${d.key} баллов: ${d.count} диалогов`)).join("")}
-          <h3>По языкам</h3>${avgRows(a.by_language)}
-          <h3>По каналам</h3>${avgRows(a.by_channel.map(x => Object.assign({}, x, { key: x.key === "voice call" ? "звонок" : x.key === "agent chat" ? "чат" : x.key })))}
-          <h3>Динамика по дням оценки</h3>${avgRows(a.by_day)}
-          <p class="small muted" style="margin:10px 0 0">Разбивка по операторам появится, когда в данных диалога будет ID оператора (в Dynamics 365 он есть в карточке обращения).</p></div>
-      </div>` : '<div class="panel empty">Оценок пока нет. Оцените диалоги на вкладке «Диалоги».</div>'}`;
+          <h3>Средний итог по языкам</h3>${avgRows(a.by_language)}
+          <h3>Средний итог по каналам</h3>${avgRows(a.by_channel.map(x => Object.assign({}, x, { key: x.key === "voice call" ? "звонки" : x.key === "agent chat" ? "чаты" : x.key })))}</div>
+      </div>` : '<div class="panel empty">Оценок пока нет. Откройте вкладку «Диалоги» и нажмите «Оценить неоценённые».</div>'}`;
     $("#an-group").addEventListener("change", e => { state.agroup = e.target.value; render(); });
   }
 
@@ -434,7 +460,7 @@
     $("#cl-copy").addEventListener("click", () => { cl.id = cl.id + "_copy"; cl.name += " (копия)"; delete cl.version; draw(); });
     $("#cl-save").addEventListener("click", async () => {
       collect();
-      try { const r = await api("/api/checklists", "POST", cl); toast("Сохранено: " + r.name + " v" + r.version); go("/checklists/" + r.id); if (location.hash === "#/checklists/" + r.id) render(); }
+      try { const r = await api("/api/checklists", "POST", cl); toast("Сохранено: " + r.name + " v" + r.version + ". Чтобы применить: откройте диалог, выберите этот чек-лист и нажмите «Оценить заново»"); go("/checklists/" + r.id); if (location.hash === "#/checklists/" + r.id) render(); }
       catch (e) { toast(e.message, true); }
     });
     if (!cl) { $("#editor").innerHTML = '<div class="empty">Нет чек-листов</div>'; return; }
@@ -445,12 +471,12 @@
       ed.innerHTML = `<div class="row">
         <div class="field" style="width:160px"><label>ID (латиница)</label><input type="text" id="e-id" value="${esc(cl.id)}" ${cl.version ? "readonly" : ""}></div>
         <div class="field grow"><label>Название</label><input type="text" id="e-name" value="${esc(cl.name)}"></div>
-        <div class="field" style="width:160px"><label>Канал по умолчанию</label><select id="e-channel"><option value="agent chat" ${cl.channel === "agent chat" ? "selected" : ""}>Чат</option><option value="voice call" ${cl.channel === "voice call" ? "selected" : ""}>Звонок</option><option value="" ${!cl.channel ? "selected" : ""}>Любой</option></select></div>
+        <div class="field" style="width:160px"><label>Для какого канала</label><select id="e-channel"><option value="agent chat" ${cl.channel === "agent chat" ? "selected" : ""}>Чат</option><option value="voice call" ${cl.channel === "voice call" ? "selected" : ""}>Звонок</option><option value="" ${!cl.channel ? "selected" : ""}>Любой</option></select></div>
         <div class="field" style="width:120px"><label>Версия</label><input type="text" value="${cl.version ? "v" + cl.version + " → v" + (cl.version + 1) : "новый"}" readonly></div></div>
         <div class="field" style="margin-top:8px"><label>Описание</label><input type="text" id="e-desc" value="${esc(cl.description || "")}"></div>
-        <h3>Секции <span class="muted small">(id через запятую в формате id:Название)</span></h3>
+        <h3>Секции чек-листа <span class="muted small">— группы критериев, через запятую в виде код:Название, например start:Начало, safety:Безопасность</span></h3>
         <input type="text" id="e-sections" value="${esc((cl.sections || []).map(s => s.id + ":" + s.title).join(", "))}">
-        <h3>Критерии <span class="muted small">— вес: сколько баллов даёт критерий до перераспределения при N/A; сумма весов обычно 100</span></h3>
+        <h3>Критерии <span class="muted small">— вес: максимум баллов за критерий; сумма весов обычно 100. Каждое сохранение создаёт новую версию, старые оценки хранят свою.</span></h3>
         <div id="e-crits">${cl.criteria.map((c, i) => critEditor(c, i)).join("")}</div>
         <div class="row" style="margin-top:8px"><button class="btn secondary sm" id="add-crit">+ Добавить критерий</button><span class="muted small">Сумма весов: <b id="wsum">${cl.criteria.filter(c => !c.critical).reduce((a, c) => a + (+c.weight || 0), 0)}</b></span></div>`;
       ed.querySelector("#add-crit").addEventListener("click", () => { collect(); cl.criteria.push({ id: "c" + String(cl.criteria.length + 1).padStart(2, "0"), section: (cl.sections[0] || {}).id || "", title: "", type: "binary", weight: 10, allow_na: false, description: "", na_condition: "", scale: [{ value: 10, label: "" }, { value: 0, label: "" }] }); draw(); });
@@ -472,10 +498,10 @@
           <div class="field"><label>Тип</label><select data-f="type" data-type="1"><option value="binary" ${c.type === "binary" ? "selected" : ""}>Да / Нет</option><option value="scale" ${c.type === "scale" ? "selected" : ""}>Шкала</option></select></div>
           <div class="field"><label>Вес</label><input type="number" data-f="weight" data-weight="1" min="0" value="${c.weight}"></div>
           <div class="field"><label>Секция</label><select data-f="section">${(cl.sections || []).map(s => `<option value="${esc(s.id)}" ${c.section === s.id ? "selected" : ""}>${esc(s.title)}</option>`).join("")}</select></div>
-          <div class="field"><label>&nbsp;</label><label class="small"><input type="checkbox" data-f="allow_na" ${c.allow_na ? "checked" : ""}> N/A</label><label class="small"><input type="checkbox" data-f="critical" ${c.critical ? "checked" : ""}> грубая</label></div>
+          <div class="field"><label>&nbsp;</label><label class="small" title="Можно ли ответить «не применимо»"><input type="checkbox" data-f="allow_na" ${c.allow_na ? "checked" : ""}> может быть N/A</label><label class="small" title="Грубая ошибка: без баллов, ставит флаг ⚠"><input type="checkbox" data-f="critical" ${c.critical ? "checked" : ""}> грубая ошибка</label></div>
         </div>
-        <div class="field" style="margin-top:6px"><label>Правило (что значит «Да» / как оценивать)</label><textarea data-f="description" style="min-height:44px">${esc(c.description || "")}</textarea></div>
-        <div class="field" style="margin-top:6px"><label>Условие N/A</label><input type="text" data-f="na_condition" value="${esc(c.na_condition || "")}" ${c.allow_na ? "" : "disabled"}></div>
+        <div class="field" style="margin-top:6px"><label>Правило: что значит «Да» или как ставить балл</label><textarea data-f="description" style="min-height:44px">${esc(c.description || "")}</textarea></div>
+        <div class="field" style="margin-top:6px"><label>Когда критерий неприменим (условие N/A)</label><input type="text" data-f="na_condition" value="${esc(c.na_condition || "")}" ${c.allow_na ? "" : "disabled"}></div>
         ${c.type === "scale" ? `<div style="margin-top:6px"><label class="small muted">Ступени шкалы (верхняя даёт полный вес)</label>${(c.scale || []).map((s, j) => `<div class="scale-row"><input type="number" data-s="${j}" data-sv="1" value="${s.value}"><input type="text" data-s="${j}" data-sl="1" value="${esc(s.label)}" placeholder="описание ступени"><button class="btn secondary sm" data-del-step="${i}-${j}">×</button></div>`).join("")}
           <button class="btn secondary sm" data-add-step="${i}" style="margin-top:4px">+ ступень</button></div>` : ""}
         <div class="tools"><button class="btn secondary sm" data-up="${i}">↑</button><button class="btn secondary sm" data-down="${i}">↓</button><button class="btn danger sm" data-del="${i}">Удалить</button></div>
@@ -502,14 +528,18 @@
     state.settings = s;
     const opt = (list, cur) => (list.includes(cur) ? list : [cur, ...list]).map(m => `<option ${m === cur ? "selected" : ""}>${esc(m)}</option>`).join("");
     view.innerHTML = `<div class="panel" style="max-width:820px">
-      <h2>Настройки оценки</h2>
-      <div class="field" style="max-width:320px;margin-bottom:10px"><label>Название команды (попадает в results.json)</label><input type="text" id="s-team" value="${esc(s.team_name || "")}"></div>
-      <h3>Локальная модель (Ollama) <span class="muted small">${models.ollama.length ? "— установлено: " + models.ollama.length : "— Ollama не запущена или моделей нет"}</span></h3>
-      <div class="row"><div class="field grow"><label>Адрес Ollama</label><input type="text" id="s-ollama-url" value="${esc(s.ollama_url)}"></div>
-        <div class="field" style="width:260px"><label>Модель</label><select id="s-ollama-model">${opt(models.ollama, s.ollama_model)}</select></div></div>
-      <p class="small muted">Диалоги оцениваются на этом компьютере, данные никуда не отправляются. Один чат — от 30 секунд до 3 минут, звонок — до 6 минут.</p>
-      <h3>Чек-лист по умолчанию</h3>
-      <div class="row">${["agent chat", "voice call"].map(ch => `<div class="field" style="width:260px"><label>${ch === "agent chat" ? "Чат" : "Звонок"}</label><select data-def="${ch}">${lists.map(c => `<option value="${esc(c.id)}" ${s.default_checklists[ch] === c.id ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></div>`).join("")}</div>
+      <h2>Настройки</h2>
+      <p class="muted small" style="margin-top:-6px">Здесь выбирают ИИ-модель, которая ставит оценки, и чек-листы, которые подставляются автоматически.</p>
+      <h3>ИИ-модель, которая оценивает диалоги</h3>
+      <p class="small">Сейчас оценивает: <b>${esc(prettyModel(s.ollama_model))}</b> — работает на этом компьютере, диалоги клиентов никуда не отправляются, оценка ничего не стоит. Один чат — 30–90 секунд, звонок — до 3 минут.${models.ollama.length ? "" : ' <span class="warn-text">Ollama не запущена: откройте приложение Ollama и обновите страницу.</span>'}</p>
+      <h3>Чек-лист по умолчанию для новых оценок</h3>
+      <p class="small muted" style="margin-top:-4px">Подставляется автоматически, когда вы открываете диалог или оцениваете весь набор. В карточке чек-лист можно сменить вручную.</p>
+      <div class="row">${["agent chat", "voice call"].map(ch => `<div class="field" style="width:260px"><label>${ch === "agent chat" ? "Для чатов" : "Для звонков"}</label><select data-def="${ch}">${lists.map(c => `<option value="${esc(c.id)}" ${s.default_checklists[ch] === c.id ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></div>`).join("")}</div>
+      <details class="raw" style="margin-top:14px"><summary>Дополнительно: смена модели, сдача результатов, журнал</summary>
+        <div class="row" style="margin-top:8px"><div class="field" style="width:300px"><label>Локальная модель (установлено: ${models.ollama.length})</label><select id="s-ollama-model">${opt(models.ollama, s.ollama_model)}</select></div>
+          <div class="field grow"><label>Адрес сервера Ollama (менять не нужно)</label><input type="text" id="s-ollama-url" value="${esc(s.ollama_url)}"></div></div>
+        <div class="field" style="max-width:420px;margin-top:8px"><label>Название команды — подпись в файле results.json для организаторов хакатона</label><input type="text" id="s-team" value="${esc(s.team_name || "")}"></div>
+        <p class="small muted"><a href="#/audit">Журнал действий</a> — кто и что менял в оценках, апелляциях, чек-листах и настройках.</p></details>
       <div class="row" style="margin-top:16px"><button class="btn" id="s-save">Сохранить</button></div>
     </div>`;
     $("#s-save").addEventListener("click", async () => {
