@@ -112,10 +112,6 @@
           <div class="kpi"><b>${evd.reduce((a, c) => a + c.evaluation.open_appeals, 0)}</b><span>открытых апелляций</span></div>
         </div>
       </section>
-      <div class="howto">
-        <div><b>1</b><span><strong>Диалоги</strong> попадают в систему из CRM, файла или API.</span></div>
-        <div><b>2</b><span><strong>Модель оценивает оператора</strong> по чек-листу: по каждому критерию — ответ, баллы, объяснение и реплика-доказательство.</span></div>
-        <div><b>3</b><span><strong>Оператор может оспорить</strong> критерий, <strong>проверяющий</strong> подтверждает или меняет оценку — итог пересчитывается. Роль переключается справа вверху.</span></div>
       </div>
       <div class="panel" style="margin-bottom:16px">
         <div class="row">
